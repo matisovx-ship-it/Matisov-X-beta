@@ -3,453 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Matisov X — System Core</title>
+    <title>Matisov X — The Great Expansion</title>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Rajdhani:wght@300;500;700&display=swap');
 
         :root {
             --neon-blue: #00d2ff;
             --neon-pink: #ff007a;
-            --cyber-gold: #f59e0b;
-            --void-black: #050505;
-            --glass-panel: rgba(10, 15, 25, 0.9);
-            --border-glow: rgba(0, 210, 255, 0.2);
+            --glass-core: rgba(5, 10, 20, 0.95);
         }
 
-        body {
-            background-color: var(--void-black);
-            color: #fff;
-            font-family: 'Rajdhani', sans-serif;
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; user-select: none; touch-action: none; margin: 0; padding: 0; }
+        body { background-color: #000; color: #fff; font-family: 'Rajdhani', sans-serif; overflow: hidden; height: 100vh; width: 100vw; }
 
-        /* Block 0: Visual Engine & Background */
-        #render-engine-bg {
-            position: fixed;
-            inset: 0;
+        #matisov-bg-engine {
+            position: fixed; inset: 0;
             background: url('https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/1771154757483~2.png') no-repeat center center;
-            background-size: cover;
-            filter: brightness(0.3) contrast(1.1) hue-rotate(10deg);
-            z-index: -1;
-            transform: scale(1.05);
+            background-size: cover; filter: brightness(0.4) contrast(1.2); z-index: -1;
         }
 
         .cyber-glass {
-            background: var(--glass-panel);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border-glow);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            background: var(--glass-core); backdrop-filter: blur(25px);
+            border: 1px solid rgba(0, 210, 255, 0.15); border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
         }
 
-        .hud-text { font-family: 'Orbitron', sans-serif; }
+        #hero-combat-zone { transition: transform 0.06s cubic-bezier(0.175, 0.885, 0.32, 1.275); will-change: transform; }
         
-        .coin-particle {
-            position: absolute;
-            pointer-events: none;
-            z-index: 9999;
-            font-weight: 900;
-            color: var(--neon-blue);
-            text-shadow: 0 0 15px var(--neon-blue);
-            animation: floatUp 1s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        .mx-coin-particle {
+            position: absolute; pointer-events: none; z-index: 1000;
+            font-family: 'Orbitron', sans-serif; font-weight: 900; color: var(--neon-blue);
+            text-shadow: 0 0 20px var(--neon-blue); display: flex; flex-direction: column; align-items: center;
         }
 
-        @keyframes floatUp {
-            0% { transform: translateY(0) scale(0.8); opacity: 1; }
-            100% { transform: translateY(-150px) scale(1.5); opacity: 0; }
+        .game-screen {
+            position: fixed; inset: 0; z-index: 2000; background: radial-gradient(circle at center, #0a0e14 0%, #000 100%);
+            display: none; flex-direction: column; padding: 25px; padding-bottom: 160px; overflow-y: auto;
         }
+        .screen-visible { display: flex !important; animation: screenFade 0.4s ease-out; }
 
-        /* Screens Transition */
-        .system-screen {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.95);
-            z-index: 50;
-            padding: 24px;
-            padding-bottom: 120px;
-            display: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            overflow-y: auto;
-        }
-        .system-screen.active { display: flex; opacity: 1; }
+        @keyframes screenFade { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-        .nav-btn { transition: transform 0.2s, color 0.2s; }
-        .nav-btn.active { color: var(--neon-blue); transform: translateY(-5px); text-shadow: 0 0 10px var(--neon-blue); }
+        .bottom-nav-hub { position: fixed; bottom: 35px; left: 20px; right: 20px; z-index: 5000; }
+        .nav-trigger { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #4a5568; transition: 0.3s; }
+        .nav-active { color: var(--neon-blue); filter: drop-shadow(0 0 8px var(--neon-blue)); transform: translateY(-5px); }
 
-        /* Progress Bar */
-        .energy-bar-container {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            overflow: hidden;
-            height: 10px;
-        }
-        .energy-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--neon-blue), #2563eb);
-            box-shadow: 0 0 20px var(--neon-blue);
-            transition: width 0.5s linear;
-        }
+        .energy-wrapper { height: 12px; background: #000; border-radius: 20px; border: 1px solid rgba(0, 210, 255, 0.3); }
+        .energy-fluid { height: 100%; border-radius: 20px; background: linear-gradient(90deg, #00d2ff, #3a7bd5); box-shadow: 0 0 15px var(--neon-blue); transition: width 0.4s; }
+        
+        .burn-action-btn { background: linear-gradient(135deg, #ff007a 0%, #7a00ff 100%); border-radius: 18px; position: relative; overflow: hidden; }
+        .mission-row { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 18px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
     </style>
 </head>
 <body>
+    <div id="matisov-bg-engine"></div>
 
-    <div id="render-engine-bg"></div>
-
-    <div id="app-root" class="flex flex-col h-full p-4 relative z-10">
-        
-        <header class="flex justify-between items-start mb-6">
-            <div>
-                <h1 class="text-3xl font-black italic tracking-tighter hud-text">
-                    MATISOV <span class="text-cyan-400">X</span>
-                </h1>
-                <div class="flex items-center gap-2 mt-1">
-                    <div id="connection-dot" class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span id="system-log" class="text-[10px] font-mono text-gray-400 tracking-widest uppercase">
-                        SYSTEM ONLINE
-                    </span>
+    <div id="game-interface-root" class="flex flex-col h-screen p-6 relative">
+        <header class="flex justify-between items-start mb-8 z-[100]">
+            <div class="space-y-2">
+                <h1 class="text-3xl font-black italic tracking-tighter">MATISOV <span class="text-cyan-400">X</span></h1>
+                <div class="cyber-glass px-4 py-2 flex items-center gap-3 border-l-4 border-pink-500">
+                    <div class="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></div>
+                    <span id="ai-neural-text" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Neural Link: Ready</span>
                 </div>
             </div>
-            
-            <div class="cyber-glass px-4 py-2 min-w-[140px] text-right">
-                <div id="display-balance" class="text-3xl font-black text-white hud-text">0</div>
-                <div class="text-[9px] text-cyan-500 font-bold uppercase tracking-widest">MX COINS</div>
+            <div class="text-right cyber-glass p-4 min-w-[120px]">
+                <div id="mx-balance-display" class="text-3xl font-black italic mb-1">0</div>
+                <div class="text-[10px] text-cyan-500 font-black uppercase tracking-tighter">MX Tokens</div>
             </div>
         </header>
 
-        <main class="flex-grow flex flex-col items-center justify-center relative">
-            <div id="click-zone" class="w-72 h-72 relative active:scale-95 transition-transform duration-100 cursor-pointer touch-manipulation">
-                <img src="https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/file_00000000f6b4720a8cb3d5825edd6728_011655.png" 
-                     class="w-full h-full object-contain drop-shadow-[0_0_50px_rgba(0,210,255,0.3)] pointer-events-none select-none">
+        <main class="flex-grow flex items-center justify-center relative" id="combat-click-trigger">
+            <div id="hero-combat-zone" class="w-full max-w-[300px]">
+                <img src="https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/file_00000000f6b4720a8cb3d5825edd6728_011655.png" alt="Hero">
             </div>
         </main>
 
-        <div class="mb-24 w-full">
-            <div class="flex justify-between text-[10px] font-bold mb-1 uppercase tracking-widest">
-                <span class="text-cyan-400 flex items-center gap-1">⚡ Energy Core</span>
-                <span id="display-energy">1000 / 1000</span>
+        <div class="mb-32 z-[100]">
+            <div class="flex justify-between items-end text-[11px] font-black mb-2 tracking-widest">
+                <div>⚡ ENERGY: <span id="energy-numeric" class="text-white text-sm">1000/1000</span></div>
             </div>
-            <div class="energy-bar-container">
-                <div id="energy-bar" class="energy-fill" style="width: 100%"></div>
-            </div>
-            <div class="mt-2 flex justify-between text-[10px] text-gray-500 font-mono">
-                <span>RECOVERY: +<span id="display-regen">1</span>/SEC</span>
-                <span>RANK: <span id="display-rank" class="text-white">NOVICE</span></span>
-            </div>
+            <div class="energy-wrapper"><div id="energy-fluid-fill" class="energy-fluid" style="width: 100%"></div></div>
         </div>
 
-        <div class="fixed bottom-6 left-6 right-6 cyber-glass h-16 flex justify-around items-center z-40 rounded-2xl">
-            <button onclick="Game.UI.router('battle')" id="nav-battle" class="nav-btn active flex flex-col items-center gap-1 w-16">
-                <span class="text-lg">⚔️</span>
-                <span class="text-[8px] font-bold uppercase">Core</span>
-            </button>
-            <button onclick="Game.UI.router('missions')" id="nav-missions" class="nav-btn flex flex-col items-center gap-1 w-16">
-                <span class="text-lg">📡</span>
-                <span class="text-[8px] font-bold uppercase">Missions</span>
-            </button>
-            <button onclick="Game.UI.router('upgrade')" id="nav-upgrade" class="nav-btn flex flex-col items-center gap-1 w-16">
-                <span class="text-lg">🔥</span>
-                <span class="text-[8px] font-bold uppercase">Boost</span>
-            </button>
-            <button onclick="Game.UI.router('profile')" id="nav-profile" class="nav-btn flex flex-col items-center gap-1 w-16">
-                <span class="text-lg">👤</span>
-                <span class="text-[8px] font-bold uppercase">Profile</span>
-            </button>
+        <div class="bottom-nav-hub">
+            <nav class="nav-inner cyber-glass flex justify-around p-3">
+                <button onclick="switchSystemScreen('battle')" id="btn-nav-battle" class="nav-trigger nav-active"><span>⚔️</span><span class="text-[9px]">БІЙ</span></button>
+                <button onclick="switchSystemScreen('missions')" id="btn-nav-missions" class="nav-trigger"><span>📜</span><span class="text-[9px]">МІСІЇ</span></button>
+                <button onclick="switchSystemScreen('burning')" id="btn-nav-burning" class="nav-trigger"><span>🔥</span><span class="text-[9px]">БУСТ</span></button>
+                <button onclick="switchSystemScreen('commander')" id="btn-nav-commander" class="nav-trigger"><span>👤</span><span class="text-[9px]">ПРОФІЛЬ</span></button>
+            </nav>
         </div>
     </div>
 
-    <div id="screen-missions" class="system-screen">
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="text-2xl font-black text-yellow-500 uppercase hud-text">Neural Tasks</h2>
-            <button onclick="Game.UI.router('battle')" class="text-2xl text-gray-400">&times;</button>
-        </div>
-        <div id="mission-list-container" class="space-y-4">
-            </div>
+    <div id="screen-missions" class="game-screen">
+        <h2 class="text-3xl font-black italic text-yellow-500 mb-8 uppercase">Neural Tasks</h2>
+        <div id="missions-render-list"></div>
     </div>
 
-    <div id="screen-upgrade" class="system-screen">
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="text-2xl font-black text-pink-500 uppercase hud-text">Engineering Bay</h2>
-            <button onclick="Game.UI.router('battle')" class="text-2xl text-gray-400">&times;</button>
-        </div>
-        
-        <div class="cyber-glass p-5 border-l-4 border-pink-500 mb-6">
-            <h3 class="text-lg font-bold">MULTITAP OVERCLOCK</h3>
-            <p class="text-xs text-gray-400 mt-1 mb-4">Increases mining power per click.</p>
-            <div class="flex justify-between items-end">
-                <div class="text-xs font-mono text-pink-300">Level: <span id="lvl-multitap">1</span></div>
-                <button onclick="Game.Systems.Economy.buyUpgrade('multitap')" class="bg-pink-600 px-4 py-2 rounded text-xs font-bold uppercase">
-                    Upgrade (<span id="cost-multitap">500</span> MX)
-                </button>
-            </div>
-        </div>
-
-        <div class="cyber-glass p-5 border-l-4 border-blue-500 mb-6">
-            <h3 class="text-lg font-bold">ENERGY EXPANSION</h3>
-            <p class="text-xs text-gray-400 mt-1 mb-4">Increases maximum energy capacity.</p>
-            <div class="flex justify-between items-end">
-                <div class="text-xs font-mono text-blue-300">Level: <span id="lvl-energy">1</span></div>
-                <button onclick="Game.Systems.Economy.buyUpgrade('energy')" class="bg-blue-600 px-4 py-2 rounded text-xs font-bold uppercase">
-                    Upgrade (<span id="cost-energy">500</span> MX)
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="screen-profile" class="system-screen">
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="text-2xl font-black text-cyan-500 uppercase hud-text">Commander</h2>
-            <button onclick="Game.UI.router('battle')" class="text-2xl text-gray-400">&times;</button>
-        </div>
-
-        <div id="ton-connect-root" class="w-full flex justify-center mb-8"></div>
-
-        <div class="cyber-glass p-6 text-center mb-6">
-            <img id="profile-avatar" src="" class="w-20 h-20 rounded-full mx-auto border-2 border-cyan-500 mb-4">
-            <h3 id="profile-name" class="text-xl font-bold uppercase">---</h3>
-            <div class="text-[10px] text-gray-500 font-mono mt-2">ID: <span id="profile-id">---</span></div>
-        </div>
-
-        <div class="cyber-glass p-4 mb-6">
-            <div class="text-xs font-bold text-gray-400 uppercase mb-2">Referral System</div>
-            <button onclick="Game.Systems.Referral.copyLink()" class="w-full py-3 bg-white text-black font-bold rounded text-xs uppercase">
-                Copy Invite Link (+50k Bonus)
+    <div id="screen-burning" class="game-screen text-center">
+        <h2 class="text-3xl font-black italic text-pink-500 mb-8 uppercase">Burning Lab</h2>
+        <div class="cyber-glass p-8 mb-8 border-t-4 border-pink-500">
+            <div class="text-6xl mb-4">🔥</div>
+            <h3 class="text-xl font-bold mb-4 uppercase">Overclock Neural Link</h3>
+            <button onclick="executeBurningUpgrade()" class="burn-action-btn w-full py-6 font-black uppercase shadow-2xl">
+                Burn 500,000 MX<br><span class="text-xs opacity-80">+2.5 Power</span>
             </button>
-            <div class="flex justify-between mt-4">
-                <div class="text-center w-1/2 border-r border-gray-700">
-                    <div class="text-[10px] text-gray-500">FRIENDS</div>
-                    <div id="profile-refs" class="text-xl font-bold">0</div>
-                </div>
-                <div class="text-center w-1/2">
-                    <div class="text-[10px] text-gray-500">EARNED</div>
-                    <div id="profile-ref-earned" class="text-xl font-bold">0</div>
-                </div>
-            </div>
         </div>
-
-        <button onclick="Game.Systems.Web3.buyMiningBot()" class="w-full py-4 border border-yellow-500 text-yellow-500 font-black rounded uppercase hover:bg-yellow-500/10 transition">
-            BUY MINING BOT (50 TON)
-        </button>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="cyber-glass p-4 text-xs text-gray-400">POWER: <span id="stats-current-power" class="text-white">1.0</span></div>
+            <div class="cyber-glass p-4 text-xs text-gray-400">BURNED: <span id="stats-burned-total" class="text-white">0</span></div>
+        </div>
     </div>
 
+    <div id="screen-commander" class="game-screen text-center">
+        <h2 class="text-3xl font-black italic text-cyan-400 mb-8 uppercase">Commander</h2>
+        <div id="ton-connect-mount-point" class="mb-6 flex justify-center"></div>
+        <div class="cyber-glass p-6 mb-6">
+            <img id="p-commander-avatar" src="" class="w-20 h-20 rounded-full mx-auto border-2 border-cyan-400 p-1 mb-3">
+            <h3 id="p-commander-name" class="text-xl font-black">---</h3>
+            <p id="p-commander-wallet" class="text-[10px] text-gray-500 font-mono truncate px-4">Wallet: Not Connected</p>
+        </div>
+        <div class="cyber-glass p-6 text-left">
+            <h4 class="text-[10px] font-black text-pink-500 uppercase mb-2">Referral Link</h4>
+            <div id="ref-link-display" class="bg-black/40 p-3 rounded-lg text-[9px] text-cyan-300 break-all mb-4">---</div>
+            <button onclick="copyRefToClipboard()" class="w-full py-3 bg-white text-black font-black rounded-lg text-xs uppercase">Копіювати (+50k Bonus)</button>
+        </div>
+    </div>
     <script>
-        /**
-         * MATISOV X - SYSTEM CORE 2.0
-         * Modular Architecture: 8 Blocks
-         * 1. CONFIG & UTILS
-         * 2. STATE MANAGEMENT
-         * 3. AUDIO ENGINE
-         * 4. ECONOMY & MATH
-         * 5. PERSISTENCE (SAVE/LOAD)
-         * 6. MISSION SYSTEM
-         * 7. WEB3 & TELEGRAM API
-         * 8. UI CONTROLLER & RENDERER
-         */
+    const tg = window.Telegram.WebApp;
+    // ТЗ: Унікальний префікс для збереження на основі ID користувача
+    const UID = tg.initDataUnsafe?.user?.id || "local_dev";
+    const USER_NAME = tg.initDataUnsafe?.user?.first_name || "Samurai";
+    
+    // Функція-хелпер для унікальних ключів
+    const storageKey = (key) => `mx_${UID}_${key}`;
 
-        /* =========================================
-           BLOCK 1: CONFIG & UTILS
-           ========================================= */
-        const Config = {
-            VERSION: '2.1.0',
-            CREATOR_ID: 84221176157, // ТЗ 1: Creator Mode
-            MINING_BOT_WALLET: 'UQCT58CCHhHD9EuKIAVaZYIICdnbRdrhtWaVzl_CBqoZHEUP',
-            CRYPTO_SALT: 'matisov-x-secure-salt-v1', // Для анти-чіту
-            LEVELS: {
-                multitap: { base: 500, growth: 2.0 }, // Експоненційний ріст ціни
-                energy: { base: 500, growth: 1.5 }
-            },
-            IMAGES: {
-                default_avatar: 'https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/file_00000000f6b4720a8cb3d5825edd6728_011655.png'
+    // Стан гри (Завантаження даних з localStorage)
+    let state = {
+        balance: parseFloat(localStorage.getItem(storageKey('bal'))) || 0,
+        energy: parseInt(localStorage.getItem(storageKey('ene'))) || 1000,
+        power: parseFloat(localStorage.getItem(storageKey('pwr'))) || 1.0,
+        burnedTotal: parseFloat(localStorage.getItem(storageKey('burned'))) || 0,
+        tasksDone: JSON.parse(localStorage.getItem(storageKey('tasks'))) || [],
+        refClaimed: localStorage.getItem(storageKey('ref_claimed')) === 'true',
+        maxEnergy: 1000
+    };
+
+    const tonConnectUI = new TONConnectUI.TonConnectUI({
+        manifestUrl: 'https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/manifest.json',
+        buttonRootId: 'ton-connect-mount-point'
+    });
+
+    function initNeuralCore() {
+        tg.expand();
+        tg.ready();
+
+        // Відображення даних профілю
+        document.getElementById('p-commander-name').innerText = USER_NAME.toUpperCase();
+        document.getElementById('ref-link-display').innerText = `https://t.me/Matisov_X_bot?start=${UID}`;
+        
+        const photo = tg.initDataUnsafe?.user?.photo_url;
+        document.getElementById('p-commander-avatar').src = photo || 'https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/file_00000000f6b4720a8cb3d5825edd6728_011655.png';
+
+        // ТЗ: Перевірка реферального бонусу
+        checkReferralBonus();
+
+        updateVisualStats();
+        startRegeneration();
+    }
+
+    // ТЗ: Збереження прогресу в localStorage
+    function saveGameState() {
+        localStorage.setItem(storageKey('bal'), state.balance);
+        localStorage.setItem(storageKey('ene'), state.energy);
+        localStorage.setItem(storageKey('pwr'), state.power);
+        localStorage.setItem(storageKey('burned'), state.burnedTotal);
+        localStorage.setItem(storageKey('tasks'), JSON.stringify(state.tasksDone));
+    }
+
+    function updateVisualStats() {
+        document.getElementById('mx-balance-display').innerText = Math.floor(state.balance).toLocaleString();
+        document.getElementById('energy-numeric').innerText = `${state.energy}/${state.maxEnergy}`;
+        document.getElementById('energy-fluid-fill').style.width = `${(state.energy / state.maxEnergy) * 100}%`;
+        document.getElementById('stats-current-power').innerText = state.power.toFixed(1);
+        document.getElementById('stats-burned-total').innerText = Math.floor(state.burnedTotal).toLocaleString();
+    }
+    </script>
+<script>
+    // ТЗ: Реферальна реєстрація (Бонус 50,000 MX)
+    function checkReferralBonus() {
+        // Перевіряємо параметр start_param від Telegram
+        const startParam = tg.initDataUnsafe?.start_param;
+        
+        if (startParam && !state.refClaimed) {
+            state.balance += 50000;
+            state.refClaimed = true;
+            localStorage.setItem(storageKey('ref_claimed'), 'true');
+            saveGameState();
+            tg.showAlert("🤖 Neural System: Ви отримали бонус 50,000 MX за запрошення!");
+        }
+    }
+
+    // Обробка тапу
+    document.getElementById('combat-click-trigger').addEventListener('pointerdown', (e) => {
+        if (state.energy < 1) {
+            tg.HapticFeedback.notificationOccurred('warning');
+            return;
+        }
+
+        state.balance += state.power;
+        state.energy -= 1;
+
+        // Анімація героя
+        const hero = document.getElementById('hero-combat-zone');
+        hero.style.transform = 'scale(0.95)';
+        setTimeout(() => hero.style.transform = 'scale(1)', 50);
+
+        // Створення монетки
+        const p = document.createElement('div');
+        p.className = 'mx-coin-particle';
+        p.style.left = `${e.clientX}px`; p.style.top = `${e.clientY}px`;
+        p.innerHTML = `🪙 +${state.power.toFixed(1)}`;
+        document.body.appendChild(p);
+        gsap.to(p, { y: -120, opacity: 0, duration: 0.6, onComplete: () => p.remove() });
+
+        tg.HapticFeedback.impactOccurred('medium');
+        updateVisualStats();
+        saveGameState();
+    });
+
+    function startRegeneration() {
+        setInterval(() => {
+            if (state.energy < state.maxEnergy) {
+                state.energy = Math.min(state.maxEnergy, state.energy + 5);
+                updateVisualStats();
+                saveGameState();
             }
-        };
+        }, 1500);
+    }
 
-        const Utils = {
-            formatNumber: (num) => Math.floor(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "),
-            generateHash: (data) => CryptoJS.MD5(JSON.stringify(data) + Config.CRYPTO_SALT).toString(),
-            sleep: (ms) => new Promise(r => setTimeout(r, ms))
-        };
+    function switchSystemScreen(screenId) {
+        document.querySelectorAll('.game-screen').forEach(s => s.classList.remove('screen-visible'));
+        document.querySelectorAll('.nav-trigger').forEach(n => n.classList.remove('nav-active'));
+        if (screenId !== 'battle') document.getElementById(`screen-${screenId}`).classList.add('screen-visible');
+        document.getElementById(`btn-nav-${screenId}`).classList.add('nav-active');
+        tg.HapticFeedback.impactOccurred('light');
+    }
 
-        /* =========================================
-           BLOCK 2: STATE MANAGEMENT (REACTIVE STORE)
-           ========================================= */
-        const Store = {
-            state: {
-                balance: 0,
-                energy: 1000,
-                maxEnergy: 1000,
-                multitapLevel: 1,
-                energyLevel: 1,
-                lastLogin: Date.now(),
-                refs: [],
-                completedMissions: [],
-                isArchitect: false,
-                isMiningBotActive: false
-            },
-            
-            // Геттери (обчислювальні властивості)
-            get clickPower() {
-                let base = 1 + (this.state.multitapLevel * 1.5); // ТЗ: Формула сили
-                if (this.state.isArchitect) base = 5000; // ТЗ: Режим Творця
-                return base;
-            },
+    function executeBurningUpgrade() {
+        const cost = 500000;
+        if (state.balance >= cost) {
+            state.balance -= cost;
+            state.power += 2.5;
+            state.burnedTotal += cost;
+            saveGameState();
+            updateVisualStats();
+            tg.showAlert("🔥 Система оновлена! Сила тапу зросла.");
+        } else {
+            tg.showAlert("Недостатньо MX для спалювання.");
+        }
+    }
 
-            get regenRate() {
-                return 1 + this.state.energyLevel; // ТЗ: Регенерація
-            },
+    function copyRefToClipboard() {
+        const link = `https://t.me/Matisov_X_bot?start=${UID}`;
+        const i = document.createElement('input'); i.value = link; document.body.appendChild(i); i.select(); document.execCommand('copy'); document.body.removeChild(i);
+        tg.showAlert("Посилання скопійовано!");
+    }
 
-            // Оновлення даних
-            commit(key, value) {
-                this.state[key] = value;
-                Game.UI.render(); // Реактивний рендер
-            },
-
-            addBalance(amount) {
-                this.state.balance += amount;
-                Game.UI.updateBalance();
-            }
-        };
-
-        /* =========================================
-           BLOCK 3: AUDIO ENGINE
-           ========================================= */
-        const AudioEngine = {
-            ctx: null,
-            init() {
-                window.AudioContext = window.AudioContext || window.webkitAudioContext;
-                this.ctx = new AudioContext();
-            },
-            playTone(freq, type = 'sine', dur = 0.1) {
-                if (!this.ctx) this.init();
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + dur);
-            },
-            playTap() { this.playTone(800 + Math.random()*200, 'triangle'); },
-            playSuccess() { this.playTone(1200, 'sine', 0.3); },
-            playError() { this.playTone(150, 'sawtooth', 0.3); }
-        };
-
-        /* =========================================
-           BLOCK 4: ECONOMY & MATH SYSTEM
-           ========================================= */
-        const Economy = {
-            processTap(event) {
-                if (Store.state.energy < Store.clickPower) {
-                    Game.UI.showToast('Energy Critical!', 'error');
-                    AudioEngine.playError();
-                    return;
-                }
-
-                // Логіка
-                Store.state.energy -= 1; // Витрата енергії фіксована
-                Store.addBalance(Store.clickPower);
-                
-                // Ефекти
-                AudioEngine.playTap();
-                Game.UI.spawnParticle(event.clientX, event.clientY, `+${Store.clickPower.toFixed(1)}`);
-                
-                // Анімація героя
-                gsap.to('#click-zone', { scale: 0.95, duration: 0.05, yoyo: true, repeat: 1 });
-            },
-
-            calculateUpgradeCost(type) {
-                const level = type === 'multitap' ? Store.state.multitapLevel : Store.state.energyLevel;
-                const config = Config.LEVELS[type];
-                // Експоненційна формула: Base * (Growth ^ Level)
-                return Math.floor(config.base * Math.pow(config.growth, level - 1));
-            },
-
-            buyUpgrade(type) {
-                const cost = this.calculateUpgradeCost(type);
-                if (Store.state.balance >= cost) {
-                    Store.state.balance -= cost;
-                    
-                    if (type === 'multitap') Store.state.multitapLevel++;
-                    if (type === 'energy') {
-                        Store.state.energyLevel++;
-                        Store.state.maxEnergy += 500; // ТЗ: +500 ємності
-                    }
-                    
-                    AudioEngine.playSuccess();
-                    Game.UI.showToast(`${type.toUpperCase()} UPGRADED!`, 'success');
-                    Game.Persistence.save();
-                    Game.UI.render(); // Оновити ціни
-                } else {
-                    Game.UI.showToast(`Need ${Utils.formatNumber(cost)} MX`, 'error');
-                    AudioEngine.playError();
-                }
-            },
-
-            regenLoop() {
-                setInterval(() => {
-                    if (Store.state.energy < Store.state.maxEnergy) {
-                        Store.state.energy = Math.min(Store.state.maxEnergy, Store.state.energy + Store.regenRate);
-                        Game.UI.updateEnergy();
-                    }
-                }, 1000);
-            },
-
-            // Офлайн майнінг (при поверненні в гру)
-            calculateOfflineProfit() {
-                const now = Date.now();
-                const diff = (now - Store.state.lastLogin) / 1000; // секунди
-                if (diff > 60 && Store.state.isMiningBotActive) {
-                    // Якщо куплено бота: 15% сили тапу в секунду
-                    const profit = Math.floor(diff * (Store.clickPower * 0.15));
-                    if (profit > 0) {
-                        Store.addBalance(profit);
-                        Game.UI.showModal(`BOT REPORT`, `While you were away, mining bot earned: ${Utils.formatNumber(profit)} MX`);
-                    }
-                }
-                Store.state.lastLogin = now;
-            }
-        };
-
-        /* =========================================
-           BLOCK 5: PERSISTENCE (SECURE SAVE)
-           ========================================= */
-        const Persistence = {
-            storageKey: `mx_save_${window.Telegram.WebApp.initDataUnsafe?.user?.id || 'dev'}`,
-            
-            save() {
-                Store.state.lastLogin = Date.now();
-                const dataStr = JSON.stringify(Store.state);
-                // Просте "шифрування" щоб не правили руками в localStorage
-                const encrypted = btoa(dataStr); 
-                const hash = Utils.generateHash(Store.state);
-                
-                localStorage.setItem(this.storageKey, JSON.stringify({
-                    data: encrypted,
-                    hash: hash
-                }));
-            },
-
-            load() {
-                const raw = localStorage.getItem(this.storageKey);
-                if (!raw) return false;
-
-                try {
-                    const parsed = JSON.parse(raw);
-                    const decrypted = atob(parsed.data);
-                    const data = JSON.parse(decrypted);
-                    
-                    // Перевірка цілісності
-                    if (Utils.generate
+    window.addEventListener('DOMContentLoaded', initNeuralCore);
+</script>
+</body>
+</html>
