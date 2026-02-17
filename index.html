@@ -1,283 +1,257 @@
-<!DOCTYPE html>
-<html lang="uk">
+<!DOCTYPE html><html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Matisov X — The Great Expansion</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matisov X 5.0 Architect Ultimate</title><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"><style>
+:root{
+--bg1:#0f0f0f;
+--bg2:#1a1a1a;
+--gold:#ffd700;
+--neon:#00f0ff;
+--red:#ff3b3b;
+}
 
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',sans-serif}
+body{
+background:linear-gradient(135deg,var(--bg1),var(--bg2));
+color:#fff;
+overflow-x:hidden;
+}
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Rajdhani:wght@300;500;700&display=swap');
+header{
+padding:20px;
+text-align:center;
+font-size:26px;
+font-weight:900;
+letter-spacing:2px;
+background:#000;
+color:var(--gold);
+box-shadow:0 0 20px #000;
+}
 
-        :root {
-            --neon-blue: #00d2ff;
-            --neon-pink: #ff007a;
-            --glass-core: rgba(5, 10, 20, 0.95);
-        }
+.container{padding:15px;max-width:1200px;margin:auto}
 
-        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; user-select: none; touch-action: none; margin: 0; padding: 0; }
-        body { background-color: #000; color: #fff; font-family: 'Rajdhani', sans-serif; overflow: hidden; height: 100vh; width: 100vw; }
+.stats{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+gap:10px;
+margin-bottom:20px;
+}
 
-        #matisov-bg-engine {
-            position: fixed; inset: 0;
-            background: url('https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/1771154757483~2.png') no-repeat center center;
-            background-size: cover; filter: brightness(0.4) contrast(1.2); z-index: -1;
-        }
+.card{
+background:#111;
+border:1px solid #222;
+padding:15px;
+border-radius:14px;
+text-align:center;
+box-shadow:0 0 15px #000;
+transition:0.3s;
+}
 
-        .cyber-glass {
-            background: var(--glass-core); backdrop-filter: blur(25px);
-            border: 1px solid rgba(0, 210, 255, 0.15); border-radius: 24px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
-        }
+.card:hover{transform:scale(1.05);border-color:var(--neon)}
 
-        #hero-combat-zone { transition: transform 0.06s cubic-bezier(0.175, 0.885, 0.32, 1.275); will-change: transform; }
-        
-        .mx-coin-particle {
-            position: absolute; pointer-events: none; z-index: 1000;
-            font-family: 'Orbitron', sans-serif; font-weight: 900; color: var(--neon-blue);
-            text-shadow: 0 0 20px var(--neon-blue); display: flex; flex-direction: column; align-items: center;
-        }
+button{
+padding:10px 15px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+font-weight:700;
+}
 
-        .game-screen {
-            position: fixed; inset: 0; z-index: 2000; background: radial-gradient(circle at center, #0a0e14 0%, #000 100%);
-            display: none; flex-direction: column; padding: 25px; padding-bottom: 160px; overflow-y: auto;
-        }
-        .screen-visible { display: flex !important; animation: screenFade 0.4s ease-out; }
+.primary{background:var(--gold);color:#000}
+.secondary{background:var(--neon);color:#000}
+.danger{background:var(--red);color:#fff}
 
-        @keyframes screenFade { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+#coin{
+width:180px;
+height:180px;
+border-radius:50%;
+background:radial-gradient(circle,#ffd700,#b8860b);
+margin:20px auto;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:22px;
+font-weight:900;
+color:#000;
+cursor:pointer;
+box-shadow:0 0 40px #ffd700;
+transition:0.1s;
+}
 
-        .bottom-nav-hub { position: fixed; bottom: 35px; left: 20px; right: 20px; z-index: 5000; }
-        .nav-trigger { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #4a5568; transition: 0.3s; }
-        .nav-active { color: var(--neon-blue); filter: drop-shadow(0 0 8px var(--neon-blue)); transform: translateY(-5px); }
+#coin:active{transform:scale(0.9)}
 
-        .energy-wrapper { height: 12px; background: #000; border-radius: 20px; border: 1px solid rgba(0, 210, 255, 0.3); }
-        .energy-fluid { height: 100%; border-radius: 20px; background: linear-gradient(90deg, #00d2ff, #3a7bd5); box-shadow: 0 0 15px var(--neon-blue); transition: width 0.4s; }
-        
-        .burn-action-btn { background: linear-gradient(135deg, #ff007a 0%, #7a00ff 100%); border-radius: 18px; position: relative; overflow: hidden; }
-        .mission-row { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 18px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    </style>
-</head>
-<body>
-    <div id="matisov-bg-engine"></div>
+.tabs{
+display:flex;
+gap:10px;
+margin-bottom:15px;
+flex-wrap:wrap;
+}
 
-    <div id="game-interface-root" class="flex flex-col h-screen p-6 relative">
-        <header class="flex justify-between items-start mb-8 z-[100]">
-            <div class="space-y-2">
-                <h1 class="text-3xl font-black italic tracking-tighter">MATISOV <span class="text-cyan-400">X</span></h1>
-                <div class="cyber-glass px-4 py-2 flex items-center gap-3 border-l-4 border-pink-500">
-                    <div class="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></div>
-                    <span id="ai-neural-text" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Neural Link: Ready</span>
-                </div>
-            </div>
-            <div class="text-right cyber-glass p-4 min-w-[120px]">
-                <div id="mx-balance-display" class="text-3xl font-black italic mb-1">0</div>
-                <div class="text-[10px] text-cyan-500 font-black uppercase tracking-tighter">MX Tokens</div>
-            </div>
-        </header>
+.tab{
+padding:8px 12px;
+border-radius:10px;
+background:#222;
+cursor:pointer;
+}
 
-        <main class="flex-grow flex items-center justify-center relative" id="combat-click-trigger">
-            <div id="hero-combat-zone" class="w-full max-w-[300px]">
-                <img src="https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/file_00000000f6b4720a8cb3d5825edd6728_011655.png" alt="Hero">
-            </div>
-        </main>
+.tab.active{background:var(--gold);color:#000}
 
-        <div class="mb-32 z-[100]">
-            <div class="flex justify-between items-end text-[11px] font-black mb-2 tracking-widest">
-                <div>⚡ ENERGY: <span id="energy-numeric" class="text-white text-sm">1000/1000</span></div>
-            </div>
-            <div class="energy-wrapper"><div id="energy-fluid-fill" class="energy-fluid" style="width: 100%"></div></div>
-        </div>
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+gap:12px;
+}
 
-        <div class="bottom-nav-hub">
-            <nav class="nav-inner cyber-glass flex justify-around p-3">
-                <button onclick="switchSystemScreen('battle')" id="btn-nav-battle" class="nav-trigger nav-active"><span>⚔️</span><span class="text-[9px]">БІЙ</span></button>
-                <button onclick="switchSystemScreen('missions')" id="btn-nav-missions" class="nav-trigger"><span>📜</span><span class="text-[9px]">МІСІЇ</span></button>
-                <button onclick="switchSystemScreen('burning')" id="btn-nav-burning" class="nav-trigger"><span>🔥</span><span class="text-[9px]">БУСТ</span></button>
-                <button onclick="switchSystemScreen('commander')" id="btn-nav-commander" class="nav-trigger"><span>👤</span><span class="text-[9px]">ПРОФІЛЬ</span></button>
-            </nav>
-        </div>
-    </div>
+.shop-item{
+background:#141414;
+padding:12px;
+border-radius:12px;
+border:1px solid #222;
+text-align:center;
+transition:0.3s;
+}
 
-    <div id="screen-missions" class="game-screen">
-        <h2 class="text-3xl font-black italic text-yellow-500 mb-8 uppercase">Neural Tasks</h2>
-        <div id="missions-render-list"></div>
-    </div>
+.shop-item:hover{border-color:var(--neon);transform:scale(1.05)}
 
-    <div id="screen-burning" class="game-screen text-center">
-        <h2 class="text-3xl font-black italic text-pink-500 mb-8 uppercase">Burning Lab</h2>
-        <div class="cyber-glass p-8 mb-8 border-t-4 border-pink-500">
-            <div class="text-6xl mb-4">🔥</div>
-            <h3 class="text-xl font-bold mb-4 uppercase">Overclock Neural Link</h3>
-            <button onclick="executeBurningUpgrade()" class="burn-action-btn w-full py-6 font-black uppercase shadow-2xl">
-                Burn 500,000 MX<br><span class="text-xs opacity-80">+2.5 Power</span>
-            </button>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-            <div class="cyber-glass p-4 text-xs text-gray-400">POWER: <span id="stats-current-power" class="text-white">1.0</span></div>
-            <div class="cyber-glass p-4 text-xs text-gray-400">BURNED: <span id="stats-burned-total" class="text-white">0</span></div>
-        </div>
-    </div>
+footer{
+margin-top:40px;
+padding:20px;
+text-align:center;
+background:#000;
+color:#777;
+font-size:12px;
+}
+</style></head>
+<body><header>Matisov X 5.0 — Architect Ultimate Edition</header><div class="container"><div class="stats">
+<div class="card">MX: <span id="mx">0</span></div>
+<div class="card">Coins: <span id="coins">0</span></div>
+<div class="card">Energy: <span id="energy">100</span></div>
+<div class="card">Level: <span id="level">1</span></div>
+<div class="card">Power: <span id="power">1</span></div>
+</div><div id="coin">CLICK</div><div class="tabs">
+<div class="tab active" onclick="openTab('shop')">Shop</div>
+<div class="tab" onclick="openTab('missions')">Missions</div>
+<div class="tab" onclick="openTab('pvp')">PvP</div>
+<div class="tab" onclick="openTab('finance')">Finance</div>
+</div><div id="shop" class="tab-content">
+<div class="grid" id="shopGrid"></div>
+</div><div id="missions" class="tab-content" style="display:none">
+<div class="grid" id="missionGrid"></div>
+</div><div id="pvp" class="tab-content" style="display:none">
+<div class="card">
+<p>AI Enemy Power: <span id="enemyPower">10</span></p>
+<button class="secondary" onclick="battle()">Start Battle</button>
+</div>
+</div><div id="finance" class="tab-content" style="display:none">
+<div class="card">
+<p>1 MX = 0.0001 USD</p>
+<p>USD Value: <span id="usd">0</span></p>
+<button class="primary" onclick="withdraw()">Withdraw</button>
+</div>
+</div></div><footer>
+© 2026 Matisov X — Architect Level System | Powered by Cuberion AI
+</footer><script>
 
-    <div id="screen-commander" class="game-screen text-center">
-        <h2 class="text-3xl font-black italic text-cyan-400 mb-8 uppercase">Commander</h2>
-        <div id="ton-connect-mount-point" class="mb-6 flex justify-center"></div>
-        <div class="cyber-glass p-6 mb-6">
-            <img id="p-commander-avatar" src="" class="w-20 h-20 rounded-full mx-auto border-2 border-cyan-400 p-1 mb-3">
-            <h3 id="p-commander-name" class="text-xl font-black">---</h3>
-            <p id="p-commander-wallet" class="text-[10px] text-gray-500 font-mono truncate px-4">Wallet: Not Connected</p>
-        </div>
-        <div class="cyber-glass p-6 text-left">
-            <h4 class="text-[10px] font-black text-pink-500 uppercase mb-2">Referral Link</h4>
-            <div id="ref-link-display" class="bg-black/40 p-3 rounded-lg text-[9px] text-cyan-300 break-all mb-4">---</div>
-            <button onclick="copyRefToClipboard()" class="w-full py-3 bg-white text-black font-black rounded-lg text-xs uppercase">Копіювати (+50k Bonus)</button>
-        </div>
-    </div>
-    <script>
-    const tg = window.Telegram.WebApp;
-    // ТЗ: Унікальний префікс для збереження на основі ID користувача
-    const UID = tg.initDataUnsafe?.user?.id || "local_dev";
-    const USER_NAME = tg.initDataUnsafe?.user?.first_name || "Samurai";
-    
-    // Функція-хелпер для унікальних ключів
-    const storageKey = (key) => `mx_${UID}_${key}`;
+let userId = localStorage.getItem('mx_uid') || 'ARCHITECT';
+localStorage.setItem('mx_uid', userId);
 
-    // Стан гри (Завантаження даних з localStorage)
-    let state = {
-        balance: parseFloat(localStorage.getItem(storageKey('bal'))) || 0,
-        energy: parseInt(localStorage.getItem(storageKey('ene'))) || 1000,
-        power: parseFloat(localStorage.getItem(storageKey('pwr'))) || 1.0,
-        burnedTotal: parseFloat(localStorage.getItem(storageKey('burned'))) || 0,
-        tasksDone: JSON.parse(localStorage.getItem(storageKey('tasks'))) || [],
-        refClaimed: localStorage.getItem(storageKey('ref_claimed')) === 'true',
-        maxEnergy: 1000
-    };
+let data = JSON.parse(localStorage.getItem('mx_data_'+userId)) || {
+mx:0,
+coins:0,
+energy:100,
+level:1,
+power:1
+};
 
-    const tonConnectUI = new TONConnectUI.TonConnectUI({
-        manifestUrl: 'https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/manifest.json',
-        buttonRootId: 'ton-connect-mount-point'
-    });
+function save(){
+localStorage.setItem('mx_data_'+userId,JSON.stringify(data));
+}
 
-    function initNeuralCore() {
-        tg.expand();
-        tg.ready();
+function updateUI(){
+document.getElementById('mx').innerText = Math.floor(data.mx);
+document.getElementById('coins').innerText = data.coins;
+document.getElementById('energy').innerText = data.energy;
+document.getElementById('level').innerText = data.level;
+document.getElementById('power').innerText = data.power;
+document.getElementById('usd').innerText = (data.mx*0.0001).toFixed(4);
+save();
+}
 
-        // Відображення даних профілю
-        document.getElementById('p-commander-name').innerText = USER_NAME.toUpperCase();
-        document.getElementById('ref-link-display').innerText = `https://t.me/Matisov_X_bot?start=${UID}`;
-        
-        const photo = tg.initDataUnsafe?.user?.photo_url;
-        document.getElementById('p-commander-avatar').src = photo || 'https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/file_00000000f6b4720a8cb3d5825edd6728_011655.png';
+setInterval(()=>{
+if(data.energy < data.level*100){data.energy +=1}
+},1000);
 
-        // ТЗ: Перевірка реферального бонусу
-        checkReferralBonus();
+coin.onclick = ()=>{
+if(data.energy<=0)return;
+data.mx += data.power;
+data.energy--;
+if(data.mx > data.level*500){data.level++;data.energy=data.level*100}
+updateUI();
+};
 
-        updateVisualStats();
-        startRegeneration();
-    }
+function openTab(id){
+document.querySelectorAll('.tab-content').forEach(e=>e.style.display='none');
+document.getElementById(id).style.display='block';
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+event.target.classList.add('active');
+}
 
-    // ТЗ: Збереження прогресу в localStorage
-    function saveGameState() {
-        localStorage.setItem(storageKey('bal'), state.balance);
-        localStorage.setItem(storageKey('ene'), state.energy);
-        localStorage.setItem(storageKey('pwr'), state.power);
-        localStorage.setItem(storageKey('burned'), state.burnedTotal);
-        localStorage.setItem(storageKey('tasks'), JSON.stringify(state.tasksDone));
-    }
+const shopItems = [
+{name:'Upgrade Power',cost:200,action:()=>{data.power+=1}},
+{name:'Energy Boost',cost:300,action:()=>{data.energy+=50}},
+{name:'Auto Miner',cost:500,action:()=>{setInterval(()=>{data.mx+=data.power*0.5;updateUI()},1000)}}
+];
 
-    function updateVisualStats() {
-        document.getElementById('mx-balance-display').innerText = Math.floor(state.balance).toLocaleString();
-        document.getElementById('energy-numeric').innerText = `${state.energy}/${state.maxEnergy}`;
-        document.getElementById('energy-fluid-fill').style.width = `${(state.energy / state.maxEnergy) * 100}%`;
-        document.getElementById('stats-current-power').innerText = state.power.toFixed(1);
-        document.getElementById('stats-burned-total').innerText = Math.floor(state.burnedTotal).toLocaleString();
-    }
-    </script>
-<script>
-    // ТЗ: Реферальна реєстрація (Бонус 50,000 MX)
-    function checkReferralBonus() {
-        // Перевіряємо параметр start_param від Telegram
-        const startParam = tg.initDataUnsafe?.start_param;
-        
-        if (startParam && !state.refClaimed) {
-            state.balance += 50000;
-            state.refClaimed = true;
-            localStorage.setItem(storageKey('ref_claimed'), 'true');
-            saveGameState();
-            tg.showAlert("🤖 Neural System: Ви отримали бонус 50,000 MX за запрошення!");
-        }
-    }
+function loadShop(){
+let grid = document.getElementById('shopGrid');
+shopItems.forEach((item,i)=>{
+let div=document.createElement('div');
+div.className='shop-item';
+div.innerHTML=`<h4>${item.name}</h4><p>${item.cost} MX</p><button class='primary'>Buy</button>`;
+div.querySelector('button').onclick=()=>{
+if(data.mx>=item.cost){data.mx-=item.cost;item.action();updateUI()}
+};
+grid.appendChild(div);
+});
+}
 
-    // Обробка тапу
-    document.getElementById('combat-click-trigger').addEventListener('pointerdown', (e) => {
-        if (state.energy < 1) {
-            tg.HapticFeedback.notificationOccurred('warning');
-            return;
-        }
+const missions=[
+{goal:100,reward:50},
+{goal:500,reward:200},
+{goal:1000,reward:500}
+];
 
-        state.balance += state.power;
-        state.energy -= 1;
+function loadMissions(){
+let grid=document.getElementById('missionGrid');
+missions.forEach(m=>{
+let div=document.createElement('div');
+div.className='shop-item';
+div.innerHTML=`<p>Earn ${m.goal} MX</p><button class='secondary'>Claim ${m.reward}</button>`;
+div.querySelector('button').onclick=()=>{
+if(data.mx>=m.goal){data.mx+=m.reward;updateUI()}
+};
+grid.appendChild(div);
+});
+}
 
-        // Анімація героя
-        const hero = document.getElementById('hero-combat-zone');
-        hero.style.transform = 'scale(0.95)';
-        setTimeout(() => hero.style.transform = 'scale(1)', 50);
+function battle(){
+let enemy = Math.floor(Math.random()*20)+5;
+document.getElementById('enemyPower').innerText=enemy;
+if(data.power>enemy){data.mx+=enemy*10;alert('Victory')}else{alert('Defeat')}
+updateUI();
+}
 
-        // Створення монетки
-        const p = document.createElement('div');
-        p.className = 'mx-coin-particle';
-        p.style.left = `${e.clientX}px`; p.style.top = `${e.clientY}px`;
-        p.innerHTML = `🪙 +${state.power.toFixed(1)}`;
-        document.body.appendChild(p);
-        gsap.to(p, { y: -120, opacity: 0, duration: 0.6, onComplete: () => p.remove() });
+function withdraw(){
+if(data.mx<1000){alert('Minimum 1000 MX required');return}
+alert('Withdrawal simulated');
+data.mx-=1000;
+updateUI();
+}
 
-        tg.HapticFeedback.impactOccurred('medium');
-        updateVisualStats();
-        saveGameState();
-    });
+loadShop();
+loadMissions();
+updateUI();
 
-    function startRegeneration() {
-        setInterval(() => {
-            if (state.energy < state.maxEnergy) {
-                state.energy = Math.min(state.maxEnergy, state.energy + 5);
-                updateVisualStats();
-                saveGameState();
-            }
-        }, 1500);
-    }
-
-    function switchSystemScreen(screenId) {
-        document.querySelectorAll('.game-screen').forEach(s => s.classList.remove('screen-visible'));
-        document.querySelectorAll('.nav-trigger').forEach(n => n.classList.remove('nav-active'));
-        if (screenId !== 'battle') document.getElementById(`screen-${screenId}`).classList.add('screen-visible');
-        document.getElementById(`btn-nav-${screenId}`).classList.add('nav-active');
-        tg.HapticFeedback.impactOccurred('light');
-    }
-
-    function executeBurningUpgrade() {
-        const cost = 500000;
-        if (state.balance >= cost) {
-            state.balance -= cost;
-            state.power += 2.5;
-            state.burnedTotal += cost;
-            saveGameState();
-            updateVisualStats();
-            tg.showAlert("🔥 Система оновлена! Сила тапу зросла.");
-        } else {
-            tg.showAlert("Недостатньо MX для спалювання.");
-        }
-    }
-
-    function copyRefToClipboard() {
-        const link = `https://t.me/Matisov_X_bot?start=${UID}`;
-        const i = document.createElement('input'); i.value = link; document.body.appendChild(i); i.select(); document.execCommand('copy'); document.body.removeChild(i);
-        tg.showAlert("Посилання скопійовано!");
-    }
-
-    window.addEventListener('DOMContentLoaded', initNeuralCore);
-</script>
-</body>
+</script></body>
 </html>
