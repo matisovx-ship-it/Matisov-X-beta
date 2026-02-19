@@ -1,3 +1,7 @@
+<!-- =========================
+BLOCK 1/3 — HEAD + STYLES
+Скопіюй від <!DOCTYPE ...> до </head>
+========================= -->
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -21,7 +25,6 @@
             --glass-core: rgba(5, 10, 20, 0.95);
         }
 
-        /* ТЗ 1: Глобальний фон та налаштування */
         * {
             -webkit-tap-highlight-color: transparent;
             box-sizing: border-box;
@@ -50,7 +53,6 @@
             transition: transform 0.3s ease-out;
         }
 
-        /* Ефекти скляних панелей */
         .cyber-glass {
             background: var(--glass-core);
             backdrop-filter: blur(25px);
@@ -59,7 +61,6 @@
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 210, 255, 0.05);
         }
 
-        /* ТЗ 2: Герой та Анімації вильоту монет */
         #hero-combat-zone {
             position: relative;
             z-index: 100;
@@ -86,7 +87,6 @@
             align-items: center;
         }
 
-        /* ТЗ 3: Меню та Екрани (Розширено) */
         .game-screen {
             position: fixed;
             inset: 0;
@@ -101,14 +101,17 @@
         }
 
         .game-screen::-webkit-scrollbar { display: none; }
-        .screen-visible { display: flex !important; animation: screenFade 0.4s ease-out; }
+
+        .screen-visible {
+            display: flex !important;
+            animation: screenFade 0.4s ease-out;
+        }
 
         @keyframes screenFade {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Навігація ТЗ 3 (Піднята та зручна) */
         .bottom-nav-hub {
             position: fixed;
             bottom: 35px;
@@ -138,7 +141,6 @@
         .nav-trigger span { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
         .nav-active { color: var(--neon-blue); filter: drop-shadow(0 0 8px var(--neon-blue)); transform: translateY(-5px); }
 
-        /* ТЗ: Прокачка та Burning */
         .burn-action-btn {
             background: linear-gradient(135deg, #ff007a 0%, #7a00ff 100%);
             border-radius: 18px;
@@ -157,9 +159,11 @@
             animation: shine 3s infinite;
         }
 
-        @keyframes shine { 0% { left: -100%; } 100% { left: 100%; } }
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
 
-        /* Стилі для завдань */
         .mission-row {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -172,9 +176,11 @@
             transition: 0.3s;
         }
 
-        .mission-row:hover { border-color: var(--neon-blue); background: rgba(0, 210, 255, 0.05); }
+        .mission-row:hover {
+            border-color: var(--neon-blue);
+            background: rgba(0, 210, 255, 0.05);
+        }
 
-        /* Енерго-бар */
         .energy-wrapper {
             height: 12px;
             background: #000;
@@ -190,19 +196,32 @@
             box-shadow: 0 0 15px var(--neon-blue);
             transition: width 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
         }
+
+        .cyber-btn {
+            transition: transform 0.12s ease;
+        }
+
+        .cyber-btn:active {
+            transform: scale(0.96);
+        }
     </style>
 </head>
+<!-- =========================
+BLOCK 2/3 — BODY UI + SCREENS + OPEN <script>
+Скопіюй від <body> до рядка:  <script>   (включно)
+========================= -->
 <body>
 
     <div id="matisov-bg-engine"></div>
 
     <div id="game-interface-root" class="flex flex-col h-screen p-6 relative">
-        
+
         <header class="flex justify-between items-start mb-8 z-[100]">
             <div class="space-y-2">
-                <h1 class="text-3xl font-black italic tracking-tighter animate__animated animate__fadeInLeft">
+                <h1 class="text-3xl font-black italic tracking-tighter">
                     MATISOV <span class="text-cyan-400">X</span>
                 </h1>
+
                 <div id="neural-advisor-box" class="cyber-glass px-4 py-2 flex items-center gap-3 border-l-4 border-pink-500">
                     <div class="w-3 h-3 bg-pink-500 rounded-full animate-pulse shadow-[0_0_10px_#ff007a]"></div>
                     <span id="ai-neural-text" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
@@ -210,18 +229,19 @@
                     </span>
                 </div>
             </div>
-            
-            <div class="text-right cyber-glass p-4 min-w-[120px] animate__animated animate__fadeInRight">
+
+            <div class="text-right cyber-glass p-4 min-w-[120px]">
                 <div id="mx-balance-display" class="text-3xl font-black text-white italic leading-none mb-1">0</div>
                 <div class="text-[10px] text-cyan-500 font-black uppercase tracking-tighter">MX Tokens Core</div>
             </div>
         </header>
 
-        <div class="flex items-center gap-4 mb-8 z-[100] animate__animated animate__fadeIn">
+        <div class="flex items-center gap-4 mb-8 z-[100]">
             <div class="relative group">
                 <img id="tg-player-photo" src="https://via.placeholder.com/80" class="w-16 h-16 rounded-full border-2 border-cyan-400 p-1 shadow-[0_0_15px_rgba(0,210,255,0.3)]">
                 <div class="absolute -bottom-1 -right-1 bg-cyan-500 text-black text-[9px] px-2 py-0.5 font-black rounded uppercase">Active</div>
             </div>
+
             <div>
                 <div id="tg-player-name" class="text-lg font-black text-white uppercase tracking-wider">Samurai Warrior</div>
                 <div class="text-[10px] text-gray-500 font-mono">NEURAL ID: <span id="tg-player-id">000000000</span></div>
@@ -240,7 +260,7 @@
                     <span class="text-cyan-400">⚡ NEURAL ENERGY</span>
                     <span id="energy-numeric" class="text-white text-sm">1000 / 1000</span>
                 </div>
-                <div class="text-gray-500 uppercase">Recovery: +5/sec</div>
+                <div id="regen-text" class="text-gray-500 uppercase">Recovery: +5/sec</div>
             </div>
             <div class="energy-wrapper">
                 <div id="energy-fluid-fill" class="energy-fluid" style="width: 100%"></div>
@@ -269,31 +289,36 @@
         </div>
     </div>
 
+    <!-- MISSIONS SCREEN -->
     <div id="screen-missions" class="game-screen">
         <div class="flex justify-between items-center mb-10">
             <h2 class="text-3xl font-black italic text-yellow-500 uppercase tracking-tighter">Neural Tasks</h2>
             <button onclick="switchSystemScreen('battle')" class="text-4xl text-white font-light">&times;</button>
         </div>
-        <div class="space-y-4" id="missions-render-list">
-            </div>
+
+        <div class="space-y-4" id="missions-render-list"></div>
     </div>
 
+    <!-- BURNING SCREEN -->
     <div id="screen-burning" class="game-screen text-center">
         <div class="flex justify-between items-center mb-10">
             <h2 class="text-3xl font-black italic text-pink-500 uppercase tracking-tighter">Burning Lab</h2>
             <button onclick="switchSystemScreen('battle')" class="text-4xl text-white font-light">&times;</button>
         </div>
+
         <div class="cyber-glass p-8 mb-8 border-t-4 border-pink-500">
             <div class="text-6xl mb-6">🔥</div>
             <h3 class="text-2xl font-black mb-4 uppercase">Overclock Neural Link</h3>
             <p class="text-sm text-gray-400 leading-relaxed mb-8">
                 Спалюйте MX монети для постійної модифікації вашого героя. Кожен апгрейд збільшує силу тапу назавжди.
             </p>
+
             <button onclick="executeBurningUpgrade()" class="burn-action-btn w-full py-6 font-black text-lg uppercase shadow-2xl">
                 Burn 500,000 MX<br>
                 <span class="text-xs opacity-80">+2.5 Power per click</span>
             </button>
         </div>
+
         <div class="grid grid-cols-2 gap-4">
             <div class="cyber-glass p-4">
                 <div class="text-[10px] text-gray-500 uppercase">Burned Total</div>
@@ -306,12 +331,13 @@
         </div>
     </div>
 
+    <!-- COMMANDER SCREEN -->
     <div id="screen-commander" class="game-screen text-center">
         <div class="flex justify-between items-center mb-10">
             <h2 class="text-3xl font-black italic text-cyan-400 uppercase tracking-tighter">Commander</h2>
             <button onclick="switchSystemScreen('battle')" class="text-4xl text-white font-light">&times;</button>
         </div>
-        
+
         <div id="ton-connect-mount-point" class="mb-8 flex justify-center"></div>
 
         <div class="cyber-glass p-8 mb-8 text-center relative overflow-hidden">
@@ -322,12 +348,36 @@
         </div>
 
         <div class="cyber-glass p-6 text-left mb-8">
-            <h4 class="text-xs font-black text-pink-500 uppercase mb-4 tracking-widest">Referral Neural Link (ТЗ 4)</h4>
+            <h4 class="text-xs font-black text-pink-500 uppercase mb-4 tracking-widest">Referral Neural Link</h4>
+
             <div id="ref-link-display" class="bg-black/60 p-4 rounded-xl font-mono text-[10px] break-all text-cyan-300 border border-white/5 mb-4 italic">
                 https://t.me/Matisov_X_bot?start=...
             </div>
+
             <button onclick="copyRefToClipboard()" class="w-full py-4 cyber-btn bg-white text-black font-black rounded-xl text-xs uppercase transition-all active:scale-95">
-                Копіювати посилання (50k MX Бонус)
+                Поділитись / Скопіювати (50k MX Бонус)
+            </button>
+        </div>
+
+        <!-- CLAIM / WITHDRAW SECTION (UI тільки, логіка у блок 3) -->
+        <div class="cyber-glass p-6 text-left mb-8">
+            <h4 class="text-xs font-black text-yellow-500 uppercase mb-4 tracking-widest">Claim / Withdrawal</h4>
+
+            <div class="bg-black/50 p-4 rounded-xl border border-white/5 mb-4">
+                <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-2">Available Claim</div>
+                <div class="flex items-center justify-between">
+                    <div class="text-sm font-black">Claimable MX</div>
+                    <div id="claimable-mx" class="text-sm font-black text-cyan-400">0</div>
+                </div>
+                <div class="text-[10px] text-gray-500 mt-2">* Claim буде активним після виконання місій або промо-івентів</div>
+            </div>
+
+            <button onclick="claimCoins()" class="w-full py-4 cyber-btn bg-yellow-500 text-black font-black rounded-xl text-xs uppercase mb-3">
+                CLAIM MX
+            </button>
+
+            <button onclick="openDexHub()" class="w-full py-4 cyber-btn bg-cyan-500 text-black font-black rounded-xl text-xs uppercase">
+                DEX HUB / TONKEEPER / EXCHANGES
             </button>
         </div>
 
@@ -342,241 +392,32 @@
             </div>
         </div>
     </div>
+
     <script>
-    /**
-     * MATISOV X - CORE NEURAL ENGINE
-     * Architect: Gemini Adaptive AI
-     */
+      <!-- =========================
+BLOCK 3/3 — FULL JS ENGINE + CLOSE TAGS
+Скопіюй від сюди до </html>
+========================= -->
+/* ================= CORE / HELPERS ================= */
+const tg = window.Telegram?.WebApp || null;
 
-    // Глобальні константи Telegram WebApp
-    const tg = window.Telegram.WebApp;
-    const UID = tg.initDataUnsafe?.user?.id || "local_dev_user";
-    const USER_NAME = tg.initDataUnsafe?.user?.first_name || "Samurai";
-    const USER_LANG = tg.initDataUnsafe?.user?.language_code || "uk";
-    
-    // Стан гри (Data Model)
-    let state = {
-        balance: parseFloat(localStorage.getItem(`mx_bal_${UID}`)) || 0,
-        energy: parseInt(localStorage.getItem(`mx_ene_${UID}`)) || 1000,
-        maxEnergy: 1000,
-        power: parseFloat(localStorage.getItem(`mx_pwr_${UID}`)) || 1.0,
-        burnedTotal: parseFloat(localStorage.getItem(`mx_burned_${UID}`)) || 0,
-        refsCount: parseInt(localStorage.getItem(`mx_ref_c_${UID}`)) || 0,
-        tasksDone: JSON.parse(localStorage.getItem(`mx_tasks_${UID}`)) || [],
-        lastRegen: Date.now()
-    };
+function safeInt(v, d) {
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? n : d;
+}
 
-    // 7: AI Мовна база (Розширена аналітика)
-    const AI_DIALECTS = {
-        uk: {
-            welcome: `Вітаю, Командоре ${USER_NAME}. Нейромережу активовано.`,
-            lowEnergy: "Енергія ядра на критичному рівні! Відпочинь.",
-            taskDone: "Завдання верифіковано. 1,000,000 MX додано до твого сховища.",
-            upgrade: "Монети спалено успішно. Твій удар став потужнішим!",
-            clickAdvise: "Продовжуй ритм. Кожен тап наближає тебе до домінування."
-        },
-        en: {
-            welcome: `Greetings, Commander ${USER_NAME}. Neural link established.`,
-            lowEnergy: "Core energy critical! Need regeneration.",
-            taskDone: "Mission verified. 1,000,000 MX added to your vault.",
-            upgrade: "MX burned successfully. Your tap power is now higher!",
-            clickAdvise: "Maintain the rhythm. Every tap builds your empire."
-        },
-        ru: {
-            welcome: `Приветствую, Командор ${USER_NAME}. Нейросеть активна.`,
-            lowEnergy: "Энергия ядра на критическом уровне! Жди заряда.",
-            taskDone: "Задание верифицировано. 1,000,000 MX зачислено.",
-            upgrade: "Монеты сожжены успешно. Твой удар стал мощнее!",
-            clickAdvise: "Держи ритм. Каждый тап приближает тебя к цели."
-        }
-    };
+function safeNum(v, d) {
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : d;
+}
 
-    // TON Connect UI Конфігурація (ТЗ 5)
-    const tonConnectUI = new TONConnectUI.TonConnectUI({
-        manifestUrl: 'https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/manifest.json',
-        buttonRootId: 'ton-connect-mount-point'
-    });
-
-    /**
-     * Ініціалізація Систем
-     */
-    function initNeuralCore() {
-        tg.expand();
-        tg.ready();
-        tg.enableClosingConfirmation();
-
-        // Налаштування UI з Telegram 
-        const user = tg.initDataUnsafe?.user;
-        document.getElementById('tg-player-name').innerText = USER_NAME.toUpperCase();
-        document.getElementById('p-commander-name').innerText = USER_NAME.toUpperCase();
-        document.getElementById('tg-player-id').innerText = UID;
-        document.getElementById('ref-link-display').innerText = `https://t.me/Matisov_X_bot?start=${UID}`;
-
-        if (user?.photo_url) {
-            document.getElementById('tg-player-photo').src = user.photo_url;
-            document.getElementById('p-commander-avatar').src = user.photo_url;
-        } else {
-            document.getElementById('p-commander-avatar').src = 'https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/file_00000000f6b4720a8cb3d5825edd6728_011655.png';
-        }
-
-        // Обробник тапу 
-        const combatArea = document.getElementById('combat-click-trigger');
-        combatArea.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            processTapAction(e);
-        });
-
-        // Слухач гаманця
-        tonConnectUI.onStatusChange(wallet => {
-            if (wallet) {
-                const addr = wallet.account.address;
-                document.getElementById('p-commander-wallet').innerText = `TON: ${addr.slice(0, 8)}...${addr.slice(-8)}`;
-                aiSpeak('Neural link with wallet secured.');
-            }
-        });
-
-        // Початкова фраза AI
-        const langData = AI_DIALECTS[USER_LANG] || AI_DIALECTS.en;
-        aiSpeak(langData.welcome);
-
-        updateVisualStats();
-        startRegenerationLoop();
-        checkReferralEntry();
+function safeJson(v, d) {
+    try {
+        const j = JSON.parse(v);
+        return j ?? d;
+    } catch (e) {
+        return d;
     }
-
-    /**
-     * ТЗ 2: Логіка Тапу з анімацією
-     */
-    function processTapAction(e) {
-        if (state.energy < state.power) {
-            aiSpeak(AI_DIALECTS[USER_LANG]?.lowEnergy || "No energy!");
-            tg.HapticFeedback.notificationOccurred('warning');
-            return;
-        }
-
-        // Розрахунок
-        state.balance += state.power;
-        state.energy -= 1;
-
-        // Візуал героя
-        const heroNode = document.getElementById('hero-combat-zone');
-        heroNode.style.transform = 'scale(0.94) rotate(-1deg)';
-        setTimeout(() => heroNode.style.transform = 'scale(1) rotate(0)', 60);
-
-        // Створення частинки MX (Монети)
-        createMXParticle(e.clientX, e.clientY);
-
-        // Фідбек
-        tg.HapticFeedback.impactOccurred('medium');
-        
-        // Рандомна порада AI
-        if (Math.random() > 0.98) {
-            aiSpeak(AI_DIALECTS[USER_LANG]?.clickAdvise || "Keep going!");
-        }
-
-        updateVisualStats();
-        saveGameState();
-    }
-
-    function createMXParticle(x, y) {
-        const p = document.createElement('div');
-        p.className = 'mx-coin-particle';
-        p.style.left = `${x}px`;
-        p.style.top = `${y}px`;
-        p.innerHTML = `<span style="font-size: 28px;">🪙</span><span style="font-size: 14px;">+${state.power.toFixed(1)}</span>`;
-        document.body.appendChild(p);
-
-        gsap.to(p, {
-            y: -180,
-            x: x + (Math.random() - 0.5) * 100,
-            opacity: 0,
-            scale: 2.2,
-            duration: 0.8,
-            ease: "power2.out",
-            onComplete: () => p.remove()
-        });
-    }
-
-    /**
-     * AI Advisor Voice (ТЗ 7)
-     */
-    function aiSpeak(text) {
-        const aiLabel = document.getElementById('ai-neural-text');
-        aiLabel.classList.remove('animate-pulse');
-        aiLabel.innerText = text;
-        
-        // Ефект "друку" або зміни
-        gsap.fromTo(aiLabel, { opacity: 0, y: 5 }, { opacity: 1, y: 0, duration: 0.3 });
-        setTimeout(() => aiLabel.classList.add('animate-pulse'), 500);
-    }
-
-    /**
-     * Оновлення інтерфейсу
-     */
-    function updateVisualStats() {
-        document.getElementById('mx-balance-display').innerText = Math.floor(state.balance).toLocaleString();
-        document.getElementById('energy-numeric').innerText = `${state.energy} / ${state.maxEnergy}`;
-        
-        const energyPercent = (state.energy / state.maxEnergy) * 100;
-        document.getElementById('energy-fluid-fill').style.width = `${energyPercent}%`;
-
-        // Профільні дані
-        document.getElementById('stats-current-power').innerText = state.power.toFixed(1);
-        document.getElementById('stats-burned-total').innerText = Math.floor(state.burnedTotal).toLocaleString() + " MX";
-        document.getElementById('stats-ref-count').innerText = state.refsCount;
-        
-        // Зміна кольору енергії
-        if (energyPercent < 20) {
-            document.getElementById('energy-fluid-fill').style.background = 'var(--neon-pink)';
-        } else {
-            document.getElementById('energy-fluid-fill').style.background = 'linear-gradient(90deg, #00d2ff, #3a7bd5)';
-        }
-    }
-
-    /**
-     * ТЗ 4: Реферальний вхід
-     */
-    function checkReferralEntry() {
-        const params = new URLSearchParams(window.location.search);
-        const refOwner = params.get('start');
-        
-        if (refOwner && !localStorage.getItem(`mx_ref_claimed_${UID}`)) {
-            state.balance += 50000;
-            localStorage.setItem(`mx_ref_claimed_${UID}`, 'true');
-            tg.showAlert("Neural Bonus: Ви отримали 50,000 MX за перехід по посиланню!");
-            updateVisualStats();
-        }
-    }
-
-    function startRegenerationLoop() {
-        setInterval(() => {
-            if (state.energy < state.maxEnergy) {
-                state.energy = Math.min(state.maxEnergy, state.energy + 5);
-                updateVisualStats();
-            }
-        }, 1200);
-    }
-
-    function saveGameState() {
-        localStorage.setItem(`mx_bal_${UID}`, state.balance);
-        localStorage.setItem(`mx_ene_${UID}`, state.energy);
-        localStorage.setItem(`mx_pwr_${UID}`, state.power);
-        localStorage.setItem(`mx_burned_${UID}`, state.burnedTotal);
-        localStorage.setItem(`mx_ref_c_${UID}`, state.refsCount);
-    }
-            </script>
-            <script>
-/**
- * MATISOV X — CORE + MISSIONS + REFERRAL (FIXED)
- * Patch: Referral start_param, safe save/load, tasks persistence, stable regen, share link
- */
-
-/* ================= TELEGRAM CORE ================= */
-const tg = window.Telegram?.WebApp;
-if (tg) {
-  tg.expand();
-  tg.ready();
-  tg.enableClosingConfirmation();
 }
 
 /* ================= USER IDENTITY ================= */
@@ -587,451 +428,457 @@ const USER_LANG = tgUser?.language_code || "uk";
 
 /* ================= STORAGE KEYS ================= */
 const K = {
-  bal: `mx_bal_${UID}`,
-  ene: `mx_ene_${UID}`,
-  pwr: `mx_pwr_${UID}`,
-  burned: `mx_burned_${UID}`,
-  refCount: `mx_ref_c_${UID}`,
-  tasks: `mx_tasks_${UID}`,
-  refClaimed: `mx_ref_claimed_${UID}`,
-  lastRegen: `mx_last_regen_${UID}`
+    bal: `mx_bal_${UID}`,
+    ene: `mx_ene_${UID}`,
+    pwr: `mx_pwr_${UID}`,
+    burned: `mx_burned_${UID}`,
+    refCount: `mx_ref_c_${UID}`,
+    tasks: `mx_tasks_${UID}`,
+    refClaimed: `mx_ref_claimed_${UID}`,
+    lastRegen: `mx_last_regen_${UID}`,
+    claimable: `mx_claimable_${UID}`
 };
 
 /* ================= GAME STATE ================= */
 let state = {
-  balance: safeNum(localStorage.getItem(K.bal), 0),
-  energy: safeInt(localStorage.getItem(K.ene), 1000),
-  maxEnergy: 1000,
+    balance: safeNum(localStorage.getItem(K.bal), 0),
+    energy: safeInt(localStorage.getItem(K.ene), 1000),
+    maxEnergy: 1000,
 
-  power: safeNum(localStorage.getItem(K.pwr), 1.0),
-  burnedTotal: safeNum(localStorage.getItem(K.burned), 0),
+    power: safeNum(localStorage.getItem(K.pwr), 1.0),
+    burnedTotal: safeNum(localStorage.getItem(K.burned), 0),
 
-  refsCount: safeInt(localStorage.getItem(K.refCount), 0),
-  tasksDone: safeJson(localStorage.getItem(K.tasks), []),
+    refsCount: safeInt(localStorage.getItem(K.refCount), 0),
+    tasksDone: safeJson(localStorage.getItem(K.tasks), []),
 
-  lastRegen: safeInt(localStorage.getItem(K.lastRegen), Date.now())
+    lastRegen: safeInt(localStorage.getItem(K.lastRegen), Date.now()),
+
+    // CLAIM pool (локально — твій “клейм” лічильник)
+    claimableMX: safeNum(localStorage.getItem(K.claimable), 0)
 };
 
 /* ================= AI DIALECTS ================= */
 const AI_DIALECTS = {
-  uk: {
-    welcome: `Вітаю, Командоре ${USER_NAME}. Нейромережу активовано.`,
-    lowEnergy: "Енергія ядра на критичному рівні! Відпочинь.",
-    taskDone: "Завдання верифіковано. 1,000,000 MX додано до твого сховища.",
-    upgrade: "Монети спалено успішно. Твій удар став потужнішим!",
-    clickAdvise: "Продовжуй ритм. Кожен тап наближає тебе до домінування.",
-    refBonus: "Neural Bonus: +50,000 MX за вхід по реферальному посиланню!"
-  },
-  en: {
-    welcome: `Greetings, Commander ${USER_NAME}. Neural link established.`,
-    lowEnergy: "Core energy critical! Need regeneration.",
-    taskDone: "Mission verified. 1,000,000 MX added to your vault.",
-    upgrade: "MX burned successfully. Your tap power is now higher!",
-    clickAdvise: "Maintain the rhythm. Every tap builds your empire.",
-    refBonus: "Referral bonus: +50,000 MX credited!"
-  }
+    uk: {
+        welcome: `Вітаю, Командоре ${USER_NAME}. Нейромережу активовано.`,
+        lowEnergy: "Енергія ядра на критичному рівні! Відпочинь.",
+        taskDone: "Завдання верифіковано. Нарахування виконано.",
+        upgrade: "Монети спалено успішно. Твій удар став потужнішим!",
+        clickAdvise: "Продовжуй ритм. Кожен тап наближає тебе до домінування.",
+        refBonus: "Neural Bonus: +50,000 MX за перехід по реферальному посиланню!"
+    },
+    en: {
+        welcome: `Greetings, Commander ${USER_NAME}. Neural link established.`,
+        lowEnergy: "Core energy critical! Need regeneration.",
+        taskDone: "Mission verified. Reward credited.",
+        upgrade: "MX burned successfully. Your tap power is now higher!",
+        clickAdvise: "Maintain the rhythm. Every tap builds your empire.",
+        refBonus: "Referral bonus: +50,000 MX credited!"
+    }
 };
 
 function getLangPack() {
-  return AI_DIALECTS[USER_LANG] || AI_DIALECTS.en;
+    return AI_DIALECTS[USER_LANG] || AI_DIALECTS.en;
 }
 
-/* ================= TON CONNECT (keep your config) ================= */
+/* ================= TON CONNECT UI ================= */
 const tonConnectUI = new TONConnectUI.TonConnectUI({
-  manifestUrl: 'https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/manifest.json',
-  buttonRootId: 'ton-connect-mount-point'
+    manifestUrl: 'https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/manifest.json',
+    buttonRootId: 'ton-connect-mount-point'
 });
 
 /* ================= MISSIONS DB ================= */
 const MISSION_DATABASE = [
-  { id: 'task_tg_ch', title: 'Matisov X Channel', reward: 1000000, url: 'https://t.me/Matisov_X', icon: '📡' },
-  { id: 'task_tg_group', title: 'Cyber Community Chat', reward: 1000000, url: 'https://t.me/MatisovX', icon: '💬' },
-  { id: 'task_yt', title: 'YouTube Neural Hub', reward: 1000000, url: 'https://www.youtube.com/@MatisovX', icon: '📺' },
-  { id: 'task_ig', title: 'Instagram Matrix', reward: 1000000, url: 'https://www.instagram.com/matisov.x', icon: '📸' },
-  { id: 'task_tw', title: 'X Intelligence (Twitter)', reward: 1000000, url: 'https://x.com/matisovx', icon: '🐦' }
+    { id: 'task_tg_ch', title: 'Matisov X Channel', reward: 1000000, url: 'https://t.me/Matisov_X', icon: '📡' },
+    { id: 'task_tg_group', title: 'Cyber Community Chat', reward: 1000000, url: 'https://t.me/MatisovX', icon: '💬' },
+    { id: 'task_yt', title: 'YouTube Neural Hub', reward: 1000000, url: 'https://www.youtube.com/@MatisovX', icon: '📺' },
+    { id: 'task_ig', title: 'Instagram Matrix', reward: 1000000, url: 'https://www.instagram.com/matisov.x', icon: '📸' },
+    { id: 'task_tw', title: 'X Intelligence (Twitter)', reward: 1000000, url: 'https://x.com/matisovx', icon: '🐦' }
 ];
 
 /* ================= INIT ================= */
 window.addEventListener('DOMContentLoaded', () => {
-  initNeuralCore();
+    initNeuralCore();
 });
 
-/* ================= CORE INIT ================= */
-function initNeuralCore() {
-  // UI from Telegram
-  document.getElementById('tg-player-name').innerText = USER_NAME.toUpperCase();
-  document.getElementById('p-commander-name').innerText = USER_NAME.toUpperCase();
-  document.getElementById('tg-player-id').innerText = UID;
-
-  const myRef = buildRefLink(UID);
-  document.getElementById('ref-link-display').innerText = myRef;
-
-  if (tgUser?.photo_url) {
-    document.getElementById('tg-player-photo').src = tgUser.photo_url;
-    document.getElementById('p-commander-avatar').src = tgUser.photo_url;
-  } else {
-    document.getElementById('p-commander-avatar').src =
-      'https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/file_00000000f6b4720a8cb3d5825edd6728_011655.png';
-  }
-
-  // Tap handler
-  const combatArea = document.getElementById('combat-click-trigger');
-  combatArea.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    processTapAction(e);
-  }, { passive:false });
-
-  // Wallet status
-  tonConnectUI.onStatusChange(wallet => {
-    if (wallet?.account?.address) {
-      const addr = wallet.account.address;
-      document.getElementById('p-commander-wallet').innerText =
-        `TON: ${addr.slice(0, 8)}...${addr.slice(-8)}`;
-      aiSpeak("Neural link with wallet secured.");
-    }
-  });
-
-  aiSpeak(getLangPack().welcome);
-
-  // Apply offline regen once
-  applyOfflineRegen();
-
-  // Referral check (FIXED)
-  checkReferralEntry();
-
-  updateVisualStats();
-  startRegenerationLoop();
-
-  // Missions render on first load (optional)
-  // renderNeuralMissions();
-}
-
-/* ================= TAP LOGIC (FIXED ENERGY COST) ================= */
-function processTapAction(e) {
-  // Energy cost = 1 (stable)
-  const energyCost = 1;
-
-  if (state.energy < energyCost) {
-    aiSpeak(getLangPack().lowEnergy);
-    tg?.HapticFeedback?.notificationOccurred('warning');
-    return;
-  }
-
-  state.balance += state.power;
-  state.energy -= energyCost;
-
-  const heroNode = document.getElementById('hero-combat-zone');
-  heroNode.style.transform = 'scale(0.94) rotate(-1deg)';
-  setTimeout(() => heroNode.style.transform = 'scale(1) rotate(0)', 60);
-
-  createMXParticle(e.clientX, e.clientY);
-
-  tg?.HapticFeedback?.impactOccurred('medium');
-
-  if (Math.random() > 0.98) {
-    aiSpeak(getLangPack().clickAdvise);
-  }
-
-  updateVisualStats();
-  saveGameState();
-}
-
-/* ================= PARTICLES ================= */
-function createMXParticle(x, y) {
-  const p = document.createElement('div');
-  p.className = 'mx-coin-particle';
-  p.style.left = `${x}px`;
-  p.style.top = `${y}px`;
-  p.innerHTML = `<span style="font-size: 28px;">🪙</span><span style="font-size: 14px;">+${state.power.toFixed(1)}</span>`;
-  document.body.appendChild(p);
-
-  gsap.to(p, {
-    y: -180,
-    x: x + (Math.random() - 0.5) * 100,
-    opacity: 0,
-    scale: 2.2,
-    duration: 0.8,
-    ease: "power2.out",
-    onComplete: () => p.remove()
-  });
-}
-
-/* ================= AI SPEAK (SINGLE SOURCE, NO DUPLICATE) ================= */
+/* ================= AI SPEAK ================= */
 function aiSpeak(text) {
-  const aiLabel = document.getElementById('ai-neural-text');
-  if (!aiLabel) return;
-  aiLabel.classList.remove('animate-pulse');
-  aiLabel.innerText = text;
-  gsap.fromTo(aiLabel, { opacity: 0, y: 5 }, { opacity: 1, y: 0, duration: 0.3 });
-  setTimeout(() => aiLabel.classList.add('animate-pulse'), 500);
+    const aiLabel = document.getElementById('ai-neural-text');
+    if (!aiLabel) return;
+
+    aiLabel.classList.remove('animate-pulse');
+    aiLabel.innerText = text;
+
+    gsap.fromTo(aiLabel, { opacity: 0, y: 5 }, { opacity: 1, y: 0, duration: 0.25 });
+    setTimeout(() => aiLabel.classList.add('animate-pulse'), 450);
 }
 
 /* ================= UI UPDATE ================= */
 function updateVisualStats() {
-  document.getElementById('mx-balance-display').innerText =
-    Math.floor(state.balance).toLocaleString();
+    document.getElementById('mx-balance-display').innerText = Math.floor(state.balance).toLocaleString();
 
-  document.getElementById('energy-numeric').innerText =
-    `${state.energy} / ${state.maxEnergy}`;
+    document.getElementById('energy-numeric').innerText = `${state.energy} / ${state.maxEnergy}`;
+    const energyPercent = (state.energy / state.maxEnergy) * 100;
 
-  const energyPercent = (state.energy / state.maxEnergy) * 100;
-  const fill = document.getElementById('energy-fluid-fill');
-  fill.style.width = `${energyPercent}%`;
+    const fill = document.getElementById('energy-fluid-fill');
+    fill.style.width = `${energyPercent}%`;
 
-  document.getElementById('stats-current-power').innerText = state.power.toFixed(1);
-  document.getElementById('stats-burned-total').innerText = Math.floor(state.burnedTotal).toLocaleString() + " MX";
-  document.getElementById('stats-ref-count').innerText = state.refsCount;
+    if (energyPercent < 20) {
+        fill.style.background = 'var(--neon-pink)';
+    } else {
+        fill.style.background = 'linear-gradient(90deg, #00d2ff, #3a7bd5)';
+    }
 
-  if (energyPercent < 20) {
-    fill.style.background = 'var(--neon-pink)';
-  } else {
-    fill.style.background = 'linear-gradient(90deg, #00d2ff, #3a7bd5)';
-  }
+    document.getElementById('stats-current-power').innerText = state.power.toFixed(1);
+    document.getElementById('stats-burned-total').innerText = Math.floor(state.burnedTotal).toLocaleString() + " MX";
+    document.getElementById('stats-ref-count').innerText = state.refsCount;
+
+    const claimNode = document.getElementById('claimable-mx');
+    if (claimNode) claimNode.innerText = Math.floor(state.claimableMX).toLocaleString();
 }
 
-/* ================= REFERRAL (FIXED FOR TELEGRAM) ================= */
+/* ================= SAVE ================= */
+function saveGameState() {
+    localStorage.setItem(K.bal, String(state.balance));
+    localStorage.setItem(K.ene, String(state.energy));
+    localStorage.setItem(K.pwr, String(state.power));
+    localStorage.setItem(K.burned, String(state.burnedTotal));
+    localStorage.setItem(K.refCount, String(state.refsCount));
+    localStorage.setItem(K.tasks, JSON.stringify(state.tasksDone));
+    localStorage.setItem(K.lastRegen, String(state.lastRegen));
+    localStorage.setItem(K.claimable, String(state.claimableMX));
+}
+
+/* ================= REFERRAL (REAL TELEGRAM FIX) ================= */
 function buildRefLink(userId) {
-  return `https://t.me/Matisov_X_bot?start=${userId}`;
+    return `https://t.me/Matisov_X_bot?start=${userId}`;
 }
 
 function getStartParam() {
-  // ✅ Telegram-native param
-  const sp = tg?.initDataUnsafe?.start_param;
-  if (sp && String(sp).trim().length > 0) return String(sp).trim();
+    // Telegram-native (працює у WebApp)
+    const sp = tg?.initDataUnsafe?.start_param;
+    if (sp && String(sp).trim().length > 0) return String(sp).trim();
 
-  // ✅ Fallback for web testing only
-  const params = new URLSearchParams(window.location.search);
-  const qs = params.get('start');
-  return qs ? String(qs).trim() : "";
+    // Fallback for browser testing
+    const params = new URLSearchParams(window.location.search);
+    const qs = params.get('start');
+    return qs ? String(qs).trim() : "";
 }
 
 function checkReferralEntry() {
-  const refOwner = getStartParam();
+    const refOwner = getStartParam();
 
-  // no param
-  if (!refOwner) return;
+    if (!refOwner) return;
+    if (String(refOwner) === String(UID)) return;
 
-  // prevent self-ref
-  if (String(refOwner) === String(UID)) return;
+    if (localStorage.getItem(K.refClaimed) === 'true') return;
 
-  // one-time claim per user
-  if (localStorage.getItem(K.refClaimed) === 'true') return;
+    state.balance += 50000;
+    localStorage.setItem(K.refClaimed, 'true');
 
-  // credit join bonus (client-side)
-  state.balance += 50000;
-  localStorage.setItem(K.refClaimed, 'true');
+    tg?.showAlert?.(getLangPack().refBonus);
+    tg?.HapticFeedback?.notificationOccurred('success');
 
-  // NOTE: реально нарахувати "рефу" (власнику refOwner) з браузера НЕМОЖЛИВО без бекенду/бота.
-  // Це треба робити на сервері бота. Тут ми робимо тільки бонус новому гравцю.
-
-  tg?.showAlert?.(getLangPack().refBonus);
-  tg?.HapticFeedback?.notificationOccurred('success');
-
-  updateVisualStats();
-  saveGameState();
+    updateVisualStats();
+    saveGameState();
 }
 
-/* ================= REF SHARE (WORKS: TG + PHONE SHARE + CLIPBOARD) ================= */
+/* ================= SHARE / COPY REF ================= */
 async function copyRefToClipboard() {
-  const link = buildRefLink(UID);
+    const link = buildRefLink(UID);
 
-  // try Telegram share first (best inside TG)
-  if (tg?.openTelegramLink) {
-    // share text via user selection (Telegram doesn't have universal "share sheet" for WebApp)
-    // We still copy + show alert.
-  }
+    // Native share (телефон)
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: 'Matisov X',
+                text: 'Join my referral link:',
+                url: link
+            });
+            tg?.HapticFeedback?.notificationOccurred('success');
+            return;
+        } catch (e) { /* fallthrough */ }
+    }
 
-  // try native share
-  if (navigator.share) {
+    // Clipboard
     try {
-      await navigator.share({ title: 'Matisov X', text: 'Join my referral link:', url: link });
-      tg?.HapticFeedback?.notificationOccurred('success');
-      return;
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(link);
+        } else {
+            const tempInput = document.createElement('input');
+            tempInput.value = link;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+        }
+        tg?.showAlert?.("Посилання скопійовано! Надішли другу для бонусу 50,000 MX.");
+        tg?.HapticFeedback?.notificationOccurred('success');
     } catch (e) {
-      // ignore and fallback
+        tg?.showAlert?.("Не вдалося скопіювати. Скопіюй вручну:\n" + link);
+        tg?.HapticFeedback?.notificationOccurred('warning');
     }
-  }
+}
 
-  // clipboard (secure context)
-  try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(link);
+/* ================= CORE INIT ================= */
+function initNeuralCore() {
+    tg?.expand?.();
+    tg?.ready?.();
+
+    document.getElementById('tg-player-name').innerText = USER_NAME.toUpperCase();
+    document.getElementById('p-commander-name').innerText = USER_NAME.toUpperCase();
+    document.getElementById('tg-player-id').innerText = UID;
+    document.getElementById('ref-link-display').innerText = buildRefLink(UID);
+
+    if (tgUser?.photo_url) {
+        document.getElementById('tg-player-photo').src = tgUser.photo_url;
+        document.getElementById('p-commander-avatar').src = tgUser.photo_url;
     } else {
-      const tempInput = document.createElement('input');
-      tempInput.value = link;
-      document.body.appendChild(tempInput);
-      tempInput.select();
-      document.execCommand('copy');
-      document.body.removeChild(tempInput);
+        document.getElementById('p-commander-avatar').src =
+            'https://raw.githubusercontent.com/matisovx-ship-it/Matisov-X-beta/main/file_00000000f6b4720a8cb3d5825edd6728_011655.png';
     }
-    tg?.showAlert?.("Посилання скопійовано! Надішли його другу для бонусу.");
-    tg?.HapticFeedback?.notificationOccurred('success');
-  } catch (e) {
-    tg?.showAlert?.("Не вдалося скопіювати. Скопіюй вручну:\n" + link);
-    tg?.HapticFeedback?.notificationOccurred('warning');
-  }
+
+    const combatArea = document.getElementById('combat-click-trigger');
+    combatArea.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        processTapAction(e);
+    }, { passive:false });
+
+    tonConnectUI.onStatusChange(wallet => {
+        if (wallet?.account?.address) {
+            const addr = wallet.account.address;
+            document.getElementById('p-commander-wallet').innerText =
+                `TON: ${addr.slice(0, 8)}...${addr.slice(-8)}`;
+            aiSpeak('Neural link with wallet secured.');
+        }
+    });
+
+    aiSpeak(getLangPack().welcome);
+
+    applyOfflineRegen();
+    checkReferralEntry();
+
+    updateVisualStats();
+    startRegenerationLoop();
+}
+
+/* ================= TAP ================= */
+function processTapAction(e) {
+    const energyCost = 1;
+
+    if (state.energy < energyCost) {
+        aiSpeak(getLangPack().lowEnergy);
+        tg?.HapticFeedback?.notificationOccurred('warning');
+        return;
+    }
+
+    state.balance += state.power;
+    state.energy -= energyCost;
+
+    const heroNode = document.getElementById('hero-combat-zone');
+    heroNode.style.transform = 'scale(0.94) rotate(-1deg)';
+    setTimeout(() => heroNode.style.transform = 'scale(1) rotate(0)', 60);
+
+    createMXParticle(e.clientX, e.clientY);
+
+    tg?.HapticFeedback?.impactOccurred('medium');
+
+    if (Math.random() > 0.98) {
+        aiSpeak(getLangPack().clickAdvise);
+    }
+
+    updateVisualStats();
+    saveGameState();
+}
+
+/* ================= PARTICLES ================= */
+function createMXParticle(x, y) {
+    const p = document.createElement('div');
+    p.className = 'mx-coin-particle';
+    p.style.left = `${x}px`;
+    p.style.top = `${y}px`;
+    p.innerHTML = `<span style="font-size: 28px;">🪙</span><span style="font-size: 14px;">+${state.power.toFixed(1)}</span>`;
+    document.body.appendChild(p);
+
+    gsap.to(p, {
+        y: -180,
+        x: x + (Math.random() - 0.5) * 100,
+        opacity: 0,
+        scale: 2.2,
+        duration: 0.8,
+        ease: "power2.out",
+        onComplete: () => p.remove()
+    });
+}
+
+/* ================= ENERGY REGEN + OFFLINE ================= */
+function applyOfflineRegen() {
+    const now = Date.now();
+    const last = state.lastRegen || now;
+    const diffSec = Math.max(0, Math.floor((now - last) / 1000));
+
+    const regenPerSec = 5;
+
+    if (diffSec > 0 && state.energy < state.maxEnergy) {
+        state.energy = Math.min(state.maxEnergy, state.energy + diffSec * regenPerSec);
+    }
+
+    state.lastRegen = now;
+    localStorage.setItem(K.lastRegen, String(state.lastRegen));
+}
+
+function startRegenerationLoop() {
+    setInterval(() => {
+        if (state.energy < state.maxEnergy) {
+            state.energy = Math.min(state.maxEnergy, state.energy + 5);
+            updateVisualStats();
+            saveGameState();
+        }
+        state.lastRegen = Date.now();
+        localStorage.setItem(K.lastRegen, String(state.lastRegen));
+    }, 1000);
 }
 
 /* ================= MISSIONS ================= */
 function renderNeuralMissions() {
-  const listContainer = document.getElementById('missions-render-list');
-  if (!listContainer) return;
+    const listContainer = document.getElementById('missions-render-list');
+    if (!listContainer) return;
 
-  listContainer.innerHTML = '';
+    listContainer.innerHTML = '';
 
-  MISSION_DATABASE.forEach(mission => {
-    const isDone = state.tasksDone.includes(mission.id);
+    MISSION_DATABASE.forEach(mission => {
+        const isDone = state.tasksDone.includes(mission.id);
 
-    const card = document.createElement('div');
-    card.className = `mission-row ${isDone ? 'opacity-40 grayscale pointer-events-none' : ''}`;
+        const card = document.createElement('div');
+        card.className = `mission-row ${isDone ? 'opacity-40 grayscale pointer-events-none' : ''}`;
 
-    card.innerHTML = `
-      <div class="flex items-center gap-4">
-        <div class="text-3xl">${mission.icon}</div>
-        <div>
-          <div class="text-sm font-black uppercase text-white">${mission.title}</div>
-          <div class="text-[10px] text-cyan-400 font-black tracking-widest">+1,000,000 MX</div>
-        </div>
-      </div>
-      <button class="px-6 py-2 cyber-btn bg-cyan-500 text-black font-black text-[10px] rounded-lg">
-        ${isDone ? 'COMPLETED' : 'VERIFY'}
-      </button>
-    `;
+        card.innerHTML = `
+            <div class="flex items-center gap-4">
+                <div class="text-3xl">${mission.icon}</div>
+                <div>
+                    <div class="text-sm font-black uppercase text-white">${mission.title}</div>
+                    <div class="text-[10px] text-cyan-400 font-black tracking-widest">+1,000,000 MX</div>
+                </div>
+            </div>
+            <button class="px-6 py-2 cyber-btn bg-cyan-500 text-black font-black text-[10px] rounded-lg">
+                ${isDone ? 'COMPLETED' : 'VERIFY'}
+            </button>
+        `;
 
-    const btn = card.querySelector('button');
-    btn.addEventListener('click', () => executeMissionLink(mission.id, mission.url, mission.reward));
+        const btn = card.querySelector('button');
+        btn.addEventListener('click', () => executeMissionLink(mission.id, mission.url, mission.reward));
 
-    listContainer.appendChild(card);
-  });
+        listContainer.appendChild(card);
+    });
 }
 
 function executeMissionLink(id, url, reward) {
-  if (state.tasksDone.includes(id)) return;
+    if (state.tasksDone.includes(id)) return;
 
-  // open link
-  tg?.openLink ? tg.openLink(url) : window.open(url, "_blank");
-  aiSpeak(getLangPack().taskDone.replace("1,000,000", "Analyzing..."));
+    if (tg?.openLink) tg.openLink(url);
+    else window.open(url, "_blank");
 
-  // “verification delay”
-  setTimeout(() => {
-    state.balance += reward;
-    state.tasksDone.push(id);
+    aiSpeak("Analyzing neural signature...");
 
-    saveGameState();
-    updateVisualStats();
-    renderNeuralMissions();
+    setTimeout(() => {
+        state.balance += reward;
+        state.tasksDone.push(id);
 
-    tg?.showAlert?.(`AI SUCCESS: +${reward.toLocaleString()} MX нараховано!`);
-    tg?.HapticFeedback?.notificationOccurred('success');
-  }, 5000);
+        saveGameState();
+        updateVisualStats();
+        renderNeuralMissions();
+
+        tg?.showAlert?.(`AI SUCCESS: +${reward.toLocaleString()} MX нараховано!`);
+        tg?.HapticFeedback?.notificationOccurred('success');
+    }, 5000);
 }
 
-/* ================= BURNING UPGRADE ================= */
+/* ================= BURNING ================= */
 function executeBurningUpgrade() {
-  const upgradeCost = 500000;
+    const upgradeCost = 500000;
 
-  if (state.balance < upgradeCost) {
-    tg?.showAlert?.("НЕДОСТАТНЬО MX: Потрібно 500,000 MX.");
-    tg?.HapticFeedback?.notificationOccurred('error');
-    return;
-  }
+    if (state.balance < upgradeCost) {
+        tg?.showAlert?.("НЕДОСТАТНЬО MX: Потрібно 500,000 MX для спалювання.");
+        tg?.HapticFeedback?.notificationOccurred('error');
+        return;
+    }
 
-  state.balance -= upgradeCost;
-  state.burnedTotal += upgradeCost;
-  state.power += 2.5;
+    state.balance -= upgradeCost;
+    state.burnedTotal += upgradeCost;
+    state.power += 2.5;
 
-  aiSpeak(getLangPack().upgrade);
+    aiSpeak(getLangPack().upgrade);
 
-  document.body.style.filter = 'invert(1) hue-rotate(180deg)';
-  setTimeout(() => document.body.style.filter = '', 200);
+    document.body.style.filter = 'invert(1) hue-rotate(180deg)';
+    setTimeout(() => document.body.style.filter = '', 200);
 
-  tg?.HapticFeedback?.notificationOccurred('success');
+    tg?.HapticFeedback?.notificationOccurred('success');
 
-  updateVisualStats();
-  saveGameState();
+    updateVisualStats();
+    saveGameState();
 }
 
 /* ================= SCREEN SWITCHER ================= */
 function switchSystemScreen(screenId) {
-  const allScreens = document.querySelectorAll('.game-screen');
-  allScreens.forEach(s => s.classList.remove('screen-visible'));
+    const allScreens = document.querySelectorAll('.game-screen');
+    allScreens.forEach(s => s.classList.remove('screen-visible'));
 
-  const allNavs = document.querySelectorAll('.nav-trigger');
-  allNavs.forEach(n => n.classList.remove('nav-active'));
+    const allNavs = document.querySelectorAll('.nav-trigger');
+    allNavs.forEach(n => n.classList.remove('nav-active'));
 
-  if (screenId !== 'battle') {
-    const target = document.getElementById(`screen-${screenId}`);
-    if (target) target.classList.add('screen-visible');
-  }
-
-  const activeNav = document.getElementById(`btn-nav-${screenId}`);
-  if (activeNav) activeNav.classList.add('nav-active');
-
-  if (screenId === 'missions') renderNeuralMissions();
-
-  tg?.HapticFeedback?.impactOccurred('light');
-}
-
-/* ================= ENERGY REGEN (STABLE + OFFLINE SUPPORT) ================= */
-function applyOfflineRegen() {
-  const now = Date.now();
-  const last = state.lastRegen || now;
-  const diffSec = Math.max(0, Math.floor((now - last) / 1000));
-
-  // базова регенерація: 5/sec (як у твоєму UI)
-  const regenPerSec = 5;
-
-  if (diffSec > 0 && state.energy < state.maxEnergy) {
-    state.energy = Math.min(state.maxEnergy, state.energy + diffSec * regenPerSec);
-  }
-
-  state.lastRegen = now;
-  localStorage.setItem(K.lastRegen, String(state.lastRegen));
-}
-
-function startRegenerationLoop() {
-  setInterval(() => {
-    if (state.energy < state.maxEnergy) {
-      state.energy = Math.min(state.maxEnergy, state.energy + 5);
-      updateVisualStats();
-      saveGameState();
+    if (screenId !== 'battle') {
+        const target = document.getElementById(`screen-${screenId}`);
+        if (target) target.classList.add('screen-visible');
     }
-    state.lastRegen = Date.now();
-    localStorage.setItem(K.lastRegen, String(state.lastRegen));
-  }, 1000);
+
+    const activeNav = document.getElementById(`btn-nav-${screenId}`);
+    if (activeNav) activeNav.classList.add('nav-active');
+
+    if (screenId === 'missions') renderNeuralMissions();
+
+    tg?.HapticFeedback?.impactOccurred('light');
 }
 
-/* ================= SAVE (FIXED: tasks + lastRegen) ================= */
-function saveGameState() {
-  localStorage.setItem(K.bal, String(state.balance));
-  localStorage.setItem(K.ene, String(state.energy));
-  localStorage.setItem(K.pwr, String(state.power));
-  localStorage.setItem(K.burned, String(state.burnedTotal));
-  localStorage.setItem(K.refCount, String(state.refsCount));
-  localStorage.setItem(K.tasks, JSON.stringify(state.tasksDone));
-  localStorage.setItem(K.lastRegen, String(state.lastRegen));
+/* ================= CLAIM + DEX HUB ================= */
+function claimCoins() {
+    if (state.claimableMX <= 0) {
+        tg?.showAlert?.("Немає доступних монет для Claim зараз.");
+        tg?.HapticFeedback?.notificationOccurred('warning');
+        return;
+    }
+
+    state.balance += state.claimableMX;
+    state.claimableMX = 0;
+
+    tg?.showAlert?.("CLAIM SUCCESS: монети додано на баланс!");
+    tg?.HapticFeedback?.notificationOccurred('success');
+
+    updateVisualStats();
+    saveGameState();
 }
 
-/* ================= HELPERS ================= */
-function safeInt(v, d) {
-  const n = parseInt(v, 10);
-  return Number.isFinite(n) ? n : d;
-}
-function safeNum(v, d) {
-  const n = parseFloat(v);
-  return Number.isFinite(n) ? n : d;
-}
-function safeJson(v, d) {
-  try {
-    const j = JSON.parse(v);
-    return j ?? d;
-  } catch {
-    return d;
-  }
+function openDexHub() {
+    const msg =
+        "DEX HUB:\n\n" +
+        "• TONKEEPER / TON Space\n" +
+        "• DeDust / STON.fi (TON DEX)\n\n" +
+        "Підключи гаманець через кнопку TON Connect зверху.\n" +
+        "Вивід/оплата — окремий модуль (бекенд потрібен для реального withdraw).";
+
+    tg?.showAlert?.(msg);
+    tg?.HapticFeedback?.impactOccurred('light');
 }
 
-/* expose funcs to inline onclick */
+/* ================= EXPOSE TO HTML onclick ================= */
 window.switchSystemScreen = switchSystemScreen;
 window.executeBurningUpgrade = executeBurningUpgrade;
 window.copyRefToClipboard = copyRefToClipboard;
-                              </script>
+window.claimCoins = claimCoins;
+window.openDexHub = openDexHub;
+
+/* ================= BOOT ================= */
+console.log("Matisov X Engine: Fully Operational");
+</script>
+
+</body>
+</html>  
