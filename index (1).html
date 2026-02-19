@@ -565,4 +565,489 @@
         localStorage.setItem(`mx_ref_c_${UID}`, state.refsCount);
     }
             </script>
-             
+             <script>
+/* =========================================================
+   MATISOV X — BLOCK 3 (USER MENU • CLAIM • DEX/TON • REF)
+   Drop-in replacement for your 3rd block.
+   Requires: tg, UID, state, saveGameState(), updateVisualStats(),
+             aiSpeak(), AI_DIALECTS, USER_LANG, initNeuralCore()
+   ========================================================= */
+
+const REF_CFG = {
+  levels: [
+    { lvl: 1, reward: 50000 },   // friend joined (direct)
+    { lvl: 2, reward: 20000 },   // friend of friend
+    { lvl: 3, reward: 10000 }    // 3rd line
+  ],
+  cooldownKey: (uid) => `mx_ref_used_${uid}`,
+  inviterKey: (uid) => `mx_inviter_${uid}`,
+  profileKey: (uid) => `mx_profile_${uid}`,
+  shareLink: (uid) => `https://t.me/Matisov_X_bot?start=${uid}`
+};
+
+const CLAIM_CFG = {
+  lastClaimKey: (uid) => `mx_last_claim_${uid}`,
+  claimableKey: (uid) => `mx_claimable_${uid}`,
+  baseRatePerSec: 0,            // if you want passive mining, set >0
+  botRatePercent: 0.15          // Mining Bot: 15% of tap power per second
+};
+
+const DEX_CFG = {
+  dex: [
+    { id: "dedust", title: "DeDust", url: "https://app.dedust.io" },
+    { id: "stonfi", title: "STON.fi", url: "https://app.ston.fi" }
+  ],
+  wallets: [
+    { id: "tonkeeper", title: "Tonkeeper", url: "https://tonkeeper.com" },
+    { id: "tonhub", title: "Tonhub", url: "https://tonhub.com" }
+  ],
+  withdraw: {
+    minMX: 10000000,
+    feePercent: 0.25,
+    gasTon: 0.05,
+    receiver: "UQCT58CCHhHD9EuKlAVaZYlICdnbRdrhtWaVzl_CBqoZHEUP"
+  }
+};
+
+const MISSION_DATABASE = [
+  { id: 'task_tg_ch', title: 'Matisov X Channel', reward: 1000000, url: 'https://t.me/Matisov_X', icon: '📡' },
+  { id: 'task_tg_group', title: 'Cyber Community Chat', reward: 1000000, url: 'https://t.me/MatisovX', icon: '💬' },
+  { id: 'task_yt', title: 'YouTube Neural Hub', reward: 1000000, url: 'https://www.youtube.com/@MatisovX', icon: '📺' },
+  { id: 'task_ig', title: 'Instagram Matrix', reward: 1000000, url: 'https://www.instagram.com/matisov.x', icon: '📸' },
+  { id: 'task_tw', title: 'X Intelligence (Twitter)', reward: 1000000, url: 'https://x.com/matisovx', icon: '🐦' }
+];
+
+/* =========================
+   REQUIRED STATE EXTENSIONS
+   ========================= */
+(function ensureState(){
+  if (!state.tasksDone) state.tasksDone = JSON.parse(localStorage.getItem(`mx_tasks_${UID}`) || "[]");
+  if (!state.ref) state.ref = JSON.parse(localStorage.getItem(`mx_ref_state_${UID}`) || "{}");
+  if (!state.ref.levelsPaid) state.ref.levelsPaid = [];
+  if (!state.ref.myInviter) state.ref.myInviter = localStorage.getItem(REF_CFG.inviterKey(UID)) || null;
+
+  const savedProfile = JSON.parse(localStorage.getItem(REF_CFG.profileKey(UID)) || "{}");
+  state.profile = {
+    nickname: savedProfile.nickname || (tg?.initDataUnsafe?.user?.first_name || "Cyber Samurai"),
+    avatar: savedProfile.avatar || (tg?.initDataUnsafe?.user?.photo_url || "")
+  };
+
+  state.wallet = JSON.parse(localStorage.getItem(`mx_wallet_${UID}`) || "{}");
+  state.wallet.connected = !!state.wallet.connected;
+  state.wallet.address = state.wallet.address || "";
+  state.premiumBot = JSON.parse(localStorage.getItem(`mx_premium_bot_${UID}`) || "false");
+
+  const last = parseInt(localStorage.getItem(CLAIM_CFG.lastClaimKey(UID)) || "0");
+  if (!Number.isFinite(last) || last <= 0) localStorage.setItem(CLAIM_CFG.lastClaimKey(UID), Date.now().toString());
+  const claimable = parseFloat(localStorage.getItem(CLAIM_CFG.claimableKey(UID)) || "0");
+  if (!Number.isFinite(claimable) || claimable < 0) localStorage.setItem(CLAIM_CFG.claimableKey(UID), "0");
+})();
+
+/* =========================
+   MENU: CLAIM COINS (REAL)
+   ========================= */
+function computeClaimableNow() {
+  const now = Date.now();
+  const last = parseInt(localStorage.getItem(CLAIM_CFG.lastClaimKey(UID)) || now.toString());
+  const seconds = Math.max(0, Math.floor((now - last) / 1000));
+
+  const tapPower = Number(state.power || 1);
+  const botRate = state.premiumBot ? (tapPower * CLAIM_CFG.botRatePercent) : 0;
+  const baseRate = CLAIM_CFG.baseRatePerSec;
+
+  const earned = seconds * (baseRate + botRate);
+  const stored = parseFloat(localStorage.getItem(CLAIM_CFG.claimableKey(UID)) || "0") || 0;
+
+  return { claimable: stored + earned, seconds };
+}
+
+function tickClaimable() {
+  const now = Date.now();
+  const last = parseInt(localStorage.getItem(CLAIM_CFG.lastClaimKey(UID)) || now.toString());
+  const seconds = Math.max(0, Math.floor((now - last) / 1000));
+  if (seconds <= 0) return;
+
+  const { claimable } = computeClaimableNow();
+  localStorage.setItem(CLAIM_CFG.claimableKey(UID), String(claimable));
+  localStorage.setItem(CLAIM_CFG.lastClaimKey(UID), String(now));
+
+  const el = document.getElementById("ui-claimable");
+  if (el) el.textContent = Math.floor(claimable).toLocaleString() + " MX";
+}
+
+function claimCoins() {
+  const { claimable } = computeClaimableNow();
+  const amount = Math.floor(claimable);
+
+  if (amount <= 0) {
+    tg?.showAlert?.("Nothing to claim yet.");
+    tg?.HapticFeedback?.notificationOccurred?.("error");
+    return;
+  }
+
+  state.balance += amount;
+
+  localStorage.setItem(CLAIM_CFG.claimableKey(UID), "0");
+  localStorage.setItem(CLAIM_CFG.lastClaimKey(UID), String(Date.now()));
+
+  saveGameState();
+  updateVisualStats();
+
+  const el = document.getElementById("ui-claimable");
+  if (el) el.textContent = "0 MX";
+
+  aiSpeak(AI_DIALECTS[USER_LANG]?.upgrade || "Claim successful. Balance updated.");
+  tg?.showAlert?.(`Claimed: ${amount.toLocaleString()} MX`);
+  tg?.HapticFeedback?.notificationOccurred?.("success");
+}
+
+/* =========================
+   TON / DEX CONNECT (UI)
+   ========================= */
+function openDexList() {
+  const buttons = DEX_CFG.dex.map(d => ({ type: "default", text: d.title, id: d.id }));
+  buttons.push({ type: "cancel", text: "Close" });
+
+  tg?.showPopup?.(
+    { title: "DEX on TON", message: "Choose exchange:", buttons },
+    (btnId) => {
+      const item = DEX_CFG.dex.find(x => x.id === btnId);
+      if (!item) return;
+      tg.openLink(item.url);
+    }
+  );
+}
+
+function openWalletList() {
+  const buttons = DEX_CFG.wallets.map(w => ({ type: "default", text: w.title, id: w.id }));
+  buttons.push({ type: "cancel", text: "Close" });
+
+  tg?.showPopup?.(
+    { title: "Wallets", message: "Choose wallet:", buttons },
+    (btnId) => {
+      const item = DEX_CFG.wallets.find(x => x.id === btnId);
+      if (!item) return;
+      tg.openLink(item.url);
+    }
+  );
+}
+
+/* NOTE:
+   Real wallet connect + on-chain withdraw MUST be validated by backend or TON Connect.
+   This block sends a request to your bot/backend via tg.sendData() for real processing. */
+function requestWithdrawMX() {
+  const amountStr = prompt(`Withdraw MX (min ${DEX_CFG.withdraw.minMX.toLocaleString()}):`, `${DEX_CFG.withdraw.minMX}`);
+  if (!amountStr) return;
+
+  const amount = Math.floor(Number(amountStr));
+  if (!Number.isFinite(amount) || amount <= 0) return tg?.showAlert?.("Invalid amount.");
+  if (amount < DEX_CFG.withdraw.minMX) return tg?.showAlert?.("Amount below minimum.");
+  if (state.balance < amount) return tg?.showAlert?.("Not enough MX balance.");
+
+  const feeMX = Math.ceil(amount * (DEX_CFG.withdraw.feePercent / 100));
+  const receiveMX = Math.max(0, amount - feeMX);
+
+  const ok = confirm(
+    `Withdraw request:\n\n` +
+    `Amount: ${amount.toLocaleString()} MX\n` +
+    `DEX fee: ${feeMX.toLocaleString()} MX (${DEX_CFG.withdraw.feePercent}%)\n` +
+    `You receive: ${receiveMX.toLocaleString()} MX\n` +
+    `Network gas: ${DEX_CFG.withdraw.gasTon} TON\n\n` +
+    `Continue?`
+  );
+  if (!ok) return;
+
+  const payload = {
+    op: "withdraw_request",
+    uid: UID,
+    amountMX: amount,
+    feeMX,
+    receiveMX,
+    gasTon: DEX_CFG.withdraw.gasTon,
+    receiver: DEX_CFG.withdraw.receiver,
+    wallet: state.wallet || {}
+  };
+
+  tg?.sendData?.(JSON.stringify(payload));
+  tg?.showAlert?.("Withdraw request sent. Confirm payment in your wallet when bot replies.");
+
+  tg?.HapticFeedback?.impactOccurred?.("light");
+}
+
+/* =========================
+   REFERRAL: PERFECT START
+   ========================= */
+function getStartParam() {
+  const sp1 = tg?.initDataUnsafe?.start_param;
+  if (sp1) return String(sp1);
+
+  try {
+    const url = new URL(window.location.href);
+    const sp2 = url.searchParams.get("start") || url.searchParams.get("startapp");
+    if (sp2) return String(sp2);
+  } catch(e){}
+
+  return "";
+}
+
+function applyReferralOnce() {
+  const usedKey = REF_CFG.cooldownKey(UID);
+  const alreadyUsed = localStorage.getItem(usedKey) === "1";
+  if (alreadyUsed) return;
+
+  const startParam = getStartParam();
+  if (!startParam) {
+    localStorage.setItem(usedKey, "1");
+    return;
+  }
+
+  const inviterId = String(startParam).replace(/[^0-9]/g, "");
+  if (!inviterId) {
+    localStorage.setItem(usedKey, "1");
+    return;
+  }
+
+  if (inviterId === String(UID)) {
+    localStorage.setItem(usedKey, "1");
+    return;
+  }
+
+  state.balance += REF_CFG.levels[0].reward;
+  state.ref.myInviter = inviterId;
+
+  localStorage.setItem(REF_CFG.inviterKey(UID), inviterId);
+  localStorage.setItem(usedKey, "1");
+  localStorage.setItem(`mx_ref_state_${UID}`, JSON.stringify(state.ref));
+
+  saveGameState();
+  updateVisualStats();
+
+  tg?.showAlert?.(`WELCOME BONUS: +${REF_CFG.levels[0].reward.toLocaleString()} MX`);
+  tg?.HapticFeedback?.notificationOccurred?.("success");
+
+  const payload = {
+    op: "ref_new_user",
+    newUserId: UID,
+    inviterId: inviterId,
+    levelRewards: REF_CFG.levels
+  };
+  tg?.sendData?.(JSON.stringify(payload));
+}
+
+/* =========================
+   REFERRAL: SHARE (PHONE UI)
+   ========================= */
+async function shareReferralLink() {
+  const link = REF_CFG.shareLink(UID);
+  const text =
+    `⚔️ MATISOV X — Cyber Samurai\n` +
+    `Join the game in Telegram and get rewards.\n` +
+    `My invite link: ${link}`;
+
+  const shareData = { title: "MATISOV X", text, url: link };
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+      tg?.HapticFeedback?.notificationOccurred?.("success");
+      return;
+    }
+  } catch(e){}
+
+  try {
+    await navigator.clipboard.writeText(link);
+    tg?.showAlert?.("Invite link copied. Paste it anywhere.");
+    tg?.HapticFeedback?.notificationOccurred?.("success");
+    return;
+  } catch(e){}
+
+  const tempInput = document.createElement('input');
+  tempInput.value = link;
+  document.body.appendChild(tempInput);
+  tempInput.select();
+  document.execCommand('copy');
+  document.body.removeChild(tempInput);
+
+  tg?.showAlert?.("Invite link copied.");
+  tg?.HapticFeedback?.notificationOccurred?.("success");
+}
+
+/* =========================
+   MULTI-LEVEL MARKETING NOTE
+   =========================
+   Pure front-end cannot credit inviter balances safely.
+   This block sends ref events to your bot via tg.sendData().
+   Your bot must store referral tree + credit rewards server-side.
+   ========================= */
+
+function renderNeuralMissions() {
+  const listContainer = document.getElementById('missions-render-list');
+  if (!listContainer) return;
+  listContainer.innerHTML = '';
+
+  MISSION_DATABASE.forEach(mission => {
+    const isDone = state.tasksDone.includes(mission.id);
+    const card = document.createElement('div');
+    card.className = `mission-row ${isDone ? 'opacity-40 grayscale pointer-events-none' : ''}`;
+
+    card.innerHTML = `
+      <div class="flex items-center gap-4">
+        <div class="text-3xl">${mission.icon}</div>
+        <div>
+          <div class="text-sm font-black uppercase text-white">${mission.title}</div>
+          <div class="text-[10px] text-cyan-400 font-black tracking-widest">+1,000,000 MX</div>
+        </div>
+      </div>
+      <button onclick="executeMissionLink('${mission.id}', '${mission.url}', ${mission.reward})"
+        class="px-6 py-2 cyber-btn bg-cyan-500 text-black font-black text-[10px] rounded-lg">
+        ${isDone ? 'COMPLETED' : 'VERIFY'}
+      </button>
+    `;
+    listContainer.appendChild(card);
+  });
+}
+
+function executeMissionLink(id, url, reward) {
+  if (state.tasksDone.includes(id)) return;
+
+  tg.openLink(url);
+  aiSpeak(AI_DIALECTS[USER_LANG]?.taskDone || "Analyzing neural signature...");
+
+  setTimeout(() => {
+    state.balance += reward;
+    state.tasksDone.push(id);
+
+    localStorage.setItem(`mx_tasks_${UID}`, JSON.stringify(state.tasksDone));
+
+    saveGameState();
+    updateVisualStats();
+    renderNeuralMissions();
+
+    tg.showAlert(`AI SUCCESS: +${reward.toLocaleString()} MX`);
+    tg.HapticFeedback.notificationOccurred('success');
+  }, 4000);
+}
+
+function executeBurningUpgrade() {
+  const upgradeCost = 500000;
+
+  if (state.balance < upgradeCost) {
+    tg.showAlert("NOT ENOUGH MX: Need 500,000 MX.");
+    tg.HapticFeedback.notificationOccurred('error');
+    return;
+  }
+
+  state.balance -= upgradeCost;
+  state.burnedTotal = (state.burnedTotal || 0) + upgradeCost;
+  state.power = Number(state.power || 1) + 2.5;
+
+  aiSpeak(AI_DIALECTS[USER_LANG]?.upgrade || "Burn complete. Power Overclocked.");
+
+  document.body.style.filter = 'invert(1) hue-rotate(180deg)';
+  setTimeout(() => document.body.style.filter = '', 200);
+
+  tg.HapticFeedback.notificationOccurred('success');
+  updateVisualStats();
+  saveGameState();
+}
+
+/* =========================
+   SCREEN SWITCHER
+   ========================= */
+function switchSystemScreen(screenId) {
+  const allScreens = document.querySelectorAll('.game-screen');
+  allScreens.forEach(s => s.classList.remove('screen-visible'));
+
+  const allNavs = document.querySelectorAll('.nav-trigger');
+  allNavs.forEach(n => n.classList.remove('nav-active'));
+
+  if (screenId !== 'battle') {
+    const target = document.getElementById(`screen-${screenId}`);
+    if (target) target.classList.add('screen-visible');
+  }
+
+  const activeNav = document.getElementById(`btn-nav-${screenId}`);
+  if (activeNav) activeNav.classList.add('nav-active');
+
+  if (screenId === 'missions') renderNeuralMissions();
+
+  if (screenId === 'profile') {
+    const claimEl = document.getElementById("ui-claimable");
+    if (claimEl) claimEl.textContent = Math.floor(computeClaimableNow().claimable).toLocaleString() + " MX";
+  }
+
+  tg.HapticFeedback.impactOccurred('light');
+}
+
+/* =========================
+   OPTIONAL: HOOK BUTTONS
+   =========================
+   In your HTML user menu add buttons with these IDs:
+   - btn-claim
+   - btn-share-ref
+   - btn-open-dex
+   - btn-open-wallets
+   - btn-withdraw
+   and a label span:
+   - ui-claimable
+   ========================= */
+function bindMenuButtons() {
+  const bClaim = document.getElementById("btn-claim");
+  if (bClaim) bClaim.onclick = claimCoins;
+
+  const bShare = document.getElementById("btn-share-ref");
+  if (bShare) bShare.onclick = shareReferralLink;
+
+  const bDex = document.getElementById("btn-open-dex");
+  if (bDex) bDex.onclick = openDexList;
+
+  const bWallets = document.getElementById("btn-open-wallets");
+  if (bWallets) bWallets.onclick = openWalletList;
+
+  const bWithdraw = document.getElementById("btn-withdraw");
+  if (bWithdraw) bWithdraw.onclick = requestWithdrawMX;
+}
+
+/* =========================
+   AUDIO TAP
+   ========================= */
+function playCyberSound(type) {
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  if (type === 'tap') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.1);
+  }
+}
+
+const clickTrigger = document.getElementById('combat-click-trigger');
+if (clickTrigger) clickTrigger.addEventListener('pointerdown', () => playCyberSound('tap'));
+
+/* =========================
+   FINAL BOOT
+   ========================= */
+window.addEventListener('DOMContentLoaded', () => {
+  try {
+    applyReferralOnce();
+    bindMenuButtons();
+    tickClaimable();
+    setInterval(tickClaimable, 1500);
+
+    initNeuralCore();
+    console.log("Matisov X Engine: Block 3 Operational");
+  } catch (e) {
+    console.error("Block 3 Error:", e);
+  }
+});
+</script>
+```0
