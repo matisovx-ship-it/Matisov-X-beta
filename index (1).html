@@ -567,363 +567,465 @@
             </script>
 <script>
 /* =========================================================
-   ✅ BLOCK 3 UPDATE (REPLACE YOUR OLD BLOCK 3 WITH THIS ONE)
-   - User Menu: CLAIM coins (real, not demo)
-   - DEX / Tonkeeper / STONfi / DeDust quick open
-   - Withdraw request (real flow via tg.sendData to your bot)
-   - Referral works from ?start= and Telegram start_param
-   - Multi-level referral: events sent to bot (server must credit)
-   - Share: opens phone share / telegram / copy
+   MATISOV X — FINAL BLOCK (MISSIONS + CLAIM + REF + DEX)
    ========================================================= */
 
-(function(){
-  /* ------------------- TELEGRAM CORE ------------------- */
-  const tg = window.Telegram?.WebApp;
-  if (tg) tg.expand();
+const tg = Telegram.WebApp;
+tg.expand();
 
-  const tgUser = tg?.initDataUnsafe?.user;
-  const UID = tgUser?.id ? String(tgUser.id) : "guest";
+const tgUser = tg.initDataUnsafe?.user;
+const UID = tgUser?.id ? String(tgUser.id) : "guest";
 
-  /* ------------------- REQUIRED GLOBALS ------------------- */
-  // state MUST exist in your base code:
-  // state.balance, state.power, saveGameState(), updateVisualStats()
-  if (!window.state) window.state = {};
-  if (!Number.isFinite(window.state.balance)) window.state.balance = 0;
-  if (!Number.isFinite(window.state.power)) window.state.power = 1;
+/* =========================
+   STORAGE KEYS (UID SAFE)
+   ========================= */
+const KEY = {
+  tasks: `mx_tasks_${UID}`,
+  claim: `mx_claim_${UID}`,
+  claimHist: `mx_claim_hist_${UID}`,
+  refClaimed: `mx_ref_claimed_${UID}`,
+  refOwner: `mx_ref_owner_${UID}`,
+  refChain: `mx_ref_chain_${UID}`
+};
 
-  /* ------------------- STORAGE KEYS (PER USER) ------------------- */
-  const KEY = {
-    claimable: `mx_claimable_${UID}`,
-    lastClaim: `mx_last_claim_${UID}`,
-    tasks: `mx_tasks_${UID}`,
-    refUsed: `mx_ref_used_${UID}`,
-    inviter: `mx_inviter_${UID}`,
-    refState: `mx_ref_state_${UID}`
-  };
+/* =========================
+   REQUIRED: global "state"
+   expects existing in your core:
+   state.balance, state.power, state.energy, state.maxEnergy
+   state.tasksDone (array), state.refsCount, etc.
+   and functions:
+   saveGameState(), updateVisualStats(), aiSpeak()
+   ========================= */
+if (!window.state) window.state = {};
+if (!Array.isArray(state.tasksDone)) {
+  try { state.tasksDone = JSON.parse(localStorage.getItem(KEY.tasks)) || []; }
+  catch(e){ state.tasksDone = []; }
+}
 
-  /* ------------------- CONFIG ------------------- */
-  const REF = {
-    levels: [
-      { lvl: 1, reward: 50000 },
-      { lvl: 2, reward: 20000 },
-      { lvl: 3, reward: 10000 }
-    ],
-    link: (uid) => `https://t.me/Matisov_X_bot?start=${uid}`
-  };
+/* =========================================================
+   1) MISSIONS (REAL LINK OPEN + DELAY CLAIM)
+   ========================================================= */
 
-  const DEX = {
-    dex: [
-      { id:"dedust", title:"DeDust", url:"https://app.dedust.io" },
-      { id:"stonfi", title:"STON.fi", url:"https://app.ston.fi" }
-    ],
-    wallets: [
-      { id:"tonkeeper", title:"Tonkeeper", url:"https://tonkeeper.com" },
-      { id:"tonhub", title:"Tonhub", url:"https://tonhub.com" }
-    ],
-    withdraw: {
-      minMX: 10000000,
-      feePercent: 0.25,
-      gasTon: 0.05,
-      receiver: "UQCT58CCHhHD9EuKlAVaZYlICdnbRdrhtWaVzl_CBqoZHEUP"
-    }
-  };
+const MISSION_DATABASE = [
+  { id: 'task_tg_ch', title: 'Matisov X Channel', reward: 1000000, url: 'https://t.me/Matisov_X', icon: '📡' },
+  { id: 'task_tg_group', title: 'Cyber Community Chat', reward: 1000000, url: 'https://t.me/MatisovX', icon: '💬' },
+  { id: 'task_yt', title: 'YouTube Neural Hub', reward: 1000000, url: 'https://www.youtube.com/@MatisovX', icon: '📺' },
+  { id: 'task_ig', title: 'Instagram Matrix', reward: 1000000, url: 'https://www.instagram.com/matisov.x', icon: '📸' },
+  { id: 'task_tw', title: 'X Intelligence (Twitter)', reward: 1000000, url: 'https://x.com/matisovx', icon: '🐦' }
+];
 
-  const CLAIM = {
-    // real claim: accrues while player offline (time delta)
-    baseRatePerSec: 0,
-    botRatePercent: 0.15, // 15% of tap power / sec if premium bot enabled
-    tickMs: 1500
-  };
+function renderNeuralMissions() {
+  const listContainer = document.getElementById('missions-render-list');
+  if (!listContainer) return;
 
-  /* ------------------- ENSURE STATE FIELDS ------------------- */
-  if (!window.state.tasksDone) {
-    window.state.tasksDone = JSON.parse(localStorage.getItem(KEY.tasks) || "[]");
-  }
-  if (!window.state.ref) {
-    window.state.ref = JSON.parse(localStorage.getItem(KEY.refState) || "{}");
-  }
-  if (!Array.isArray(window.state.ref.levelsPaid)) window.state.ref.levelsPaid = [];
-  if (!window.state.ref.myInviter) window.state.ref.myInviter = localStorage.getItem(KEY.inviter) || null;
+  listContainer.innerHTML = '';
 
-  if (localStorage.getItem(KEY.lastClaim) === null) {
-    localStorage.setItem(KEY.lastClaim, String(Date.now()));
-  }
-  if (localStorage.getItem(KEY.claimable) === null) {
-    localStorage.setItem(KEY.claimable, "0");
-  }
+  MISSION_DATABASE.forEach(mission => {
+    const isDone = state.tasksDone.includes(mission.id);
 
-  /* =========================================================
-     ✅ 1) USER MENU: CLAIM COINS (REAL)
-     --------------------------------------------------------- */
-  function computeClaimableNow(){
-    const now = Date.now();
-    const last = parseInt(localStorage.getItem(KEY.lastClaim) || String(now));
-    const elapsed = Math.max(0, Math.floor((now - last) / 1000));
+    const card = document.createElement('div');
+    card.className = `mission-row ${isDone ? 'opacity-40 grayscale pointer-events-none' : ''}`;
 
-    const stored = Math.max(0, Math.floor(Number(localStorage.getItem(KEY.claimable) || "0")));
-    const tapPower = Number(window.state.power || 1);
+    card.innerHTML = `
+      <div class="flex items-center gap-4">
+        <div class="text-3xl">${mission.icon}</div>
+        <div>
+          <div class="text-sm font-black uppercase text-white">${mission.title}</div>
+          <div class="text-[10px] text-cyan-400 font-black tracking-widest">+1,000,000 MX</div>
+        </div>
+      </div>
 
-    const isBot = !!window.state.premiumBot; // set true when user buys bot
-    const rate = CLAIM.baseRatePerSec + (isBot ? (tapPower * CLAIM.botRatePercent) : 0);
+      <button class="px-6 py-2 cyber-btn bg-cyan-500 text-black font-black text-[10px] rounded-lg"
+        data-mission-id="${mission.id}"
+        data-mission-url="${mission.url}"
+        data-mission-reward="${mission.reward}">
+        ${isDone ? 'COMPLETED' : 'VERIFY'}
+      </button>
+    `;
 
-    const earned = Math.floor(elapsed * rate);
-    return { now, elapsed, claimable: stored + earned };
-  }
-
-  function tickClaimable(){
-    const { now, elapsed, claimable } = computeClaimableNow();
-    if (elapsed > 0) {
-      localStorage.setItem(KEY.claimable, String(claimable));
-      localStorage.setItem(KEY.lastClaim, String(now));
-    }
-    const el = document.getElementById("ui-claimable");
-    if (el) el.textContent = `${claimable.toLocaleString()} MX`;
-  }
-
-  function claimCoins(){
-    const { now, claimable } = computeClaimableNow();
-    const amount = Math.floor(claimable);
-
-    if (amount <= 0) {
-      tg?.showAlert?.("Немає що клеймити зараз.");
-      tg?.HapticFeedback?.notificationOccurred?.("error");
-      return;
-    }
-
-    window.state.balance += amount;
-
-    localStorage.setItem(KEY.claimable, "0");
-    localStorage.setItem(KEY.lastClaim, String(now));
-
-    if (typeof window.saveGameState === "function") window.saveGameState();
-    if (typeof window.updateVisualStats === "function") window.updateVisualStats();
-
-    const el = document.getElementById("ui-claimable");
-    if (el) el.textContent = "0 MX";
-
-    tg?.showAlert?.(`✅ Клейм: +${amount.toLocaleString()} MX`);
-    tg?.HapticFeedback?.notificationOccurred?.("success");
-  }
-
-  /* =========================================================
-     ✅ 2) DEX + WALLETS + WITHDRAW FLOW (REAL via BOT)
-     --------------------------------------------------------- */
-  function openDexList(){
-    const buttons = DEX.dex.map(d => ({ type:"default", text:d.title, id:d.id }));
-    buttons.push({ type:"cancel", text:"Close" });
-
-    tg?.showPopup?.(
-      { title:"DEX (TON)", message:"Вибери біржу:", buttons },
-      (id) => {
-        const item = DEX.dex.find(x=>x.id===id);
-        if (item) tg.openLink(item.url);
-      }
-    );
-  }
-
-  function openWalletList(){
-    const buttons = DEX.wallets.map(w => ({ type:"default", text:w.title, id:w.id }));
-    buttons.push({ type:"cancel", text:"Close" });
-
-    tg?.showPopup?.(
-      { title:"Wallets", message:"Вибери гаманець:", buttons },
-      (id) => {
-        const item = DEX.wallets.find(x=>x.id===id);
-        if (item) tg.openLink(item.url);
-      }
-    );
-  }
-
-  function requestWithdrawMX(){
-    const min = DEX.withdraw.minMX;
-
-    const amountStr = prompt(`Вивід MX (мін ${min.toLocaleString()}):`, `${min}`);
-    if (!amountStr) return;
-
-    const amount = Math.floor(Number(amountStr));
-    if (!Number.isFinite(amount) || amount <= 0) {
-      tg?.showAlert?.("Некоректна сума.");
-      return;
-    }
-    if (amount < min) {
-      tg?.showAlert?.("Сума нижче мінімуму.");
-      return;
-    }
-    if (window.state.balance < amount) {
-      tg?.showAlert?.("Недостатньо MX на балансі.");
-      return;
-    }
-
-    const feeMX = Math.ceil(amount * (DEX.withdraw.feePercent / 100));
-    const receiveMX = Math.max(0, amount - feeMX);
-
-    const ok = confirm(
-      `Вивід:\n` +
-      `Сума: ${amount.toLocaleString()} MX\n` +
-      `Комісія: ${feeMX.toLocaleString()} MX (${DEX.withdraw.feePercent}%)\n` +
-      `До отримання: ${receiveMX.toLocaleString()} MX\n` +
-      `Gas: ${DEX.withdraw.gasTon} TON\n\n` +
-      `Продовжити?`
-    );
-    if (!ok) return;
-
-    const payload = {
-      op: "withdraw_request",
-      uid: UID,
-      amountMX: amount,
-      feeMX: feeMX,
-      receiveMX: receiveMX,
-      gasTon: DEX.withdraw.gasTon,
-      receiver: DEX.withdraw.receiver,
-      ts: Date.now()
-    };
-
-    // REAL: your bot must handle this and reply with invoice / instructions
-    tg?.sendData?.(JSON.stringify(payload));
-
-    tg?.showAlert?.("✅ Запит на вивід відправлено боту. Чекай підтвердження.");
-    tg?.HapticFeedback?.impactOccurred?.("light");
-  }
-
-  /* =========================================================
-     ✅ 3) REFERRAL: PERFECT START + MULTI-LEVEL EVENT
-     --------------------------------------------------------- */
-  function getStartParam(){
-    const sp1 = tg?.initDataUnsafe?.start_param;
-    if (sp1) return String(sp1);
-
-    try{
-      const url = new URL(window.location.href);
-      const sp2 = url.searchParams.get("start") || url.searchParams.get("startapp");
-      if (sp2) return String(sp2);
-    }catch(e){}
-
-    return "";
-  }
-
-  function applyReferralOnce(){
-    if (localStorage.getItem(KEY.refUsed) === "1") return;
-
-    const startParam = getStartParam();
-    if (!startParam) {
-      localStorage.setItem(KEY.refUsed, "1");
-      return;
-    }
-
-    const inviterId = String(startParam).replace(/[^0-9]/g,"");
-    if (!inviterId) {
-      localStorage.setItem(KEY.refUsed, "1");
-      return;
-    }
-
-    if (inviterId === UID) {
-      localStorage.setItem(KEY.refUsed, "1");
-      return;
-    }
-
-    // user bonus (real in-game)
-    window.state.balance += REF.levels[0].reward;
-    localStorage.setItem(KEY.inviter, inviterId);
-    localStorage.setItem(KEY.refUsed, "1");
-
-    window.state.ref.myInviter = inviterId;
-    localStorage.setItem(KEY.refState, JSON.stringify(window.state.ref));
-
-    if (typeof window.saveGameState === "function") window.saveGameState();
-    if (typeof window.updateVisualStats === "function") window.updateVisualStats();
-
-    tg?.showAlert?.(`🎁 Бонус за вхід: +${REF.levels[0].reward.toLocaleString()} MX`);
-    tg?.HapticFeedback?.notificationOccurred?.("success");
-
-    // multi-level credit MUST be done on bot/server
-    const payload = {
-      op: "ref_new_user",
-      newUserId: UID,
-      inviterId: inviterId,
-      levels: REF.levels,
-      ts: Date.now()
-    };
-    tg?.sendData?.(JSON.stringify(payload));
-  }
-
-  async function shareReferralLink(){
-    const link = REF.link(UID);
-    const text = `⚔️ MATISOV X — Cyber Samurai\n🎮 Join & earn\nInvite: ${link}`;
-
-    try{
-      if (navigator.share) {
-        await navigator.share({ title:"MATISOV X", text, url: link });
-        tg?.HapticFeedback?.notificationOccurred?.("success");
-        return;
-      }
-    }catch(e){}
-
-    try{
-      await navigator.clipboard.writeText(link);
-      tg?.showAlert?.("✅ Реф-посилання скопійовано.");
-      tg?.HapticFeedback?.notificationOccurred?.("success");
-      return;
-    }catch(e){}
-
-    const temp = document.createElement("input");
-    temp.value = link;
-    document.body.appendChild(temp);
-    temp.select();
-    document.execCommand("copy");
-    document.body.removeChild(temp);
-
-    tg?.showAlert?.("✅ Реф-посилання скопійовано.");
-    tg?.HapticFeedback?.notificationOccurred?.("success");
-  }
-
-  /* =========================================================
-     ✅ BUTTON BINDINGS (YOUR MENU)
-     ---------------------------------------------------------
-     Add these IDs in your HTML (user menu screen):
-     - btn-claim
-     - btn-open-dex
-     - btn-open-wallets
-     - btn-withdraw
-     - btn-share-ref
-     - ui-claimable (span)
-     ========================================================= */
-  function bindMenuButtons(){
-    const b1 = document.getElementById("btn-claim");
-    if (b1) b1.onclick = claimCoins;
-
-    const b2 = document.getElementById("btn-open-dex");
-    if (b2) b2.onclick = openDexList;
-
-    const b3 = document.getElementById("btn-open-wallets");
-    if (b3) b3.onclick = openWalletList;
-
-    const b4 = document.getElementById("btn-withdraw");
-    if (b4) b4.onclick = requestWithdrawMX;
-
-    const b5 = document.getElementById("btn-share-ref");
-    if (b5) b5.onclick = shareReferralLink;
-  }
-
-  /* =========================================================
-     ✅ BOOT
-     ========================================================= */
-  window.addEventListener("DOMContentLoaded", ()=>{
-    applyReferralOnce();
-    bindMenuButtons();
-    tickClaimable();
-    setInterval(tickClaimable, CLAIM.tickMs);
+    listContainer.appendChild(card);
   });
 
-  /* expose for your other blocks if needed */
-  window.MX_BLOCK3 = {
-    UID,
-    claimCoins,
-    openDexList,
-    openWalletList,
-    requestWithdrawMX,
-    shareReferralLink,
-    tickClaimable
+  listContainer.querySelectorAll('button[data-mission-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-mission-id');
+      const url = btn.getAttribute('data-mission-url');
+      const reward = parseInt(btn.getAttribute('data-mission-reward') || '0', 10);
+      executeMissionLink(id, url, reward);
+    });
+  });
+}
+
+function executeMissionLink(id, url, reward) {
+  if (state.tasksDone.includes(id)) return;
+
+  tg.openLink(url);
+  if (window.aiSpeak) {
+    aiSpeak("AI scanning... Verification in progress.");
+  }
+
+  setTimeout(() => {
+    state.balance = (state.balance || 0) + reward;
+    state.tasksDone.push(id);
+
+    localStorage.setItem(KEY.tasks, JSON.stringify(state.tasksDone));
+
+    if (window.saveGameState) saveGameState();
+    if (window.updateVisualStats) updateVisualStats();
+    renderNeuralMissions();
+
+    tg.showAlert(`✅ VERIFIED: +${reward.toLocaleString()} MX credited!`);
+    tg.HapticFeedback?.notificationOccurred('success');
+  }, 5000);
+}
+
+/* =========================================================
+   2) CLAIM COINS (USER MENU)
+   - daily/interval claim with UID-safe storage
+   ========================================================= */
+
+const CLAIM = {
+  cooldownMs: 6 * 60 * 60 * 1000,
+  amountMX: 25000
+};
+
+function getClaimState() {
+  try {
+    return JSON.parse(localStorage.getItem(KEY.claim)) || { last: 0, total: 0 };
+  } catch (e) {
+    return { last: 0, total: 0 };
+  }
+}
+
+function setClaimState(cs) {
+  localStorage.setItem(KEY.claim, JSON.stringify(cs));
+}
+
+function canClaimNow() {
+  const cs = getClaimState();
+  const now = Date.now();
+  const next = (cs.last || 0) + CLAIM.cooldownMs;
+  return now >= next;
+}
+
+function claimCoinsNow() {
+  const cs = getClaimState();
+
+  if (!canClaimNow()) {
+    const now = Date.now();
+    const next = (cs.last || 0) + CLAIM.cooldownMs;
+    const left = Math.max(0, next - now);
+    const mins = Math.ceil(left / 60000);
+    tg.showAlert(`⏳ Claim cooldown: ~${mins} min left`);
+    tg.HapticFeedback?.notificationOccurred('error');
+    return;
+  }
+
+  const now = Date.now();
+  cs.last = now;
+  cs.total = (cs.total || 0) + CLAIM.amountMX;
+  setClaimState(cs);
+
+  state.balance = (state.balance || 0) + CLAIM.amountMX;
+
+  pushClaimHistory({
+    t: now,
+    amount: CLAIM.amountMX,
+    type: "CLAIM"
+  });
+
+  if (window.saveGameState) saveGameState();
+  if (window.updateVisualStats) updateVisualStats();
+
+  tg.showAlert(`✅ CLAIMED: +${CLAIM.amountMX.toLocaleString()} MX`);
+  tg.HapticFeedback?.notificationOccurred('success');
+}
+
+function pushClaimHistory(item) {
+  let hist = [];
+  try { hist = JSON.parse(localStorage.getItem(KEY.claimHist)) || []; }
+  catch(e){ hist = []; }
+  hist.unshift(item);
+  hist = hist.slice(0, 30);
+  localStorage.setItem(KEY.claimHist, JSON.stringify(hist));
+}
+
+function renderClaimUI() {
+  const btn = document.getElementById('btn-claim-mx');
+  const txt = document.getElementById('claim-status-text');
+
+  if (!btn && !txt) return;
+
+  const cs = getClaimState();
+  const now = Date.now();
+  const next = (cs.last || 0) + CLAIM.cooldownMs;
+
+  if (now >= next) {
+    if (btn) btn.disabled = false;
+    if (btn) btn.textContent = `CLAIM +${CLAIM.amountMX.toLocaleString()} MX`;
+    if (txt) txt.textContent = `Ready to claim`;
+  } else {
+    const left = next - now;
+    const mins = Math.ceil(left / 60000);
+    if (btn) btn.disabled = true;
+    if (btn) btn.textContent = `COOLDOWN`;
+    if (txt) txt.textContent = `Next claim in ~${mins} min`;
+  }
+}
+
+/* =========================================================
+   3) DEX / TON (OPEN LINKS + WALLET FLOW)
+   - DeDust, STON.fi, Tonkeeper deeplink
+   - If TonConnect exists in your core -> connect & pay
+   ========================================================= */
+
+const DEX_LINKS = {
+  dedust: "https://app.dedust.io",
+  stonfi: "https://app.ston.fi",
+  tonviewer: "https://tonviewer.com"
+};
+
+function openDEX(which) {
+  const url = DEX_LINKS[which];
+  if (!url) return;
+  tg.openLink(url);
+  tg.HapticFeedback?.impactOccurred('light');
+}
+
+function openTonkeeper() {
+  tg.openLink("https://t.me/wallet");
+  tg.HapticFeedback?.impactOccurred('light');
+}
+
+async function connectWalletIfPossible() {
+  if (!window.tonConnectUI) {
+    tg.showAlert("TonConnect не підключений у 2-му блоці. Додай @tonconnect/ui і створення tonConnectUI.");
+    return false;
+  }
+  try {
+    if (!tonConnectUI.connected) {
+      await tonConnectUI.connectWallet();
+    }
+    return tonConnectUI.connected;
+  } catch (e) {
+    tg.showAlert("Wallet connect canceled / failed.");
+    return false;
+  }
+}
+
+async function payTONReal(amountTon, toAddress, comment) {
+  const ok = await connectWalletIfPossible();
+  if (!ok) return;
+
+  const nano = Math.floor(Number(amountTon) * 1e9).toString();
+
+  try {
+    await tonConnectUI.sendTransaction({
+      validUntil: Math.floor(Date.now() / 1000) + 300,
+      messages: [
+        {
+          address: toAddress,
+          amount: nano,
+          payload: comment ? btoa(unescape(encodeURIComponent(comment))) : undefined
+        }
+      ]
+    });
+
+    tg.showAlert("✅ TON transaction sent");
+    tg.HapticFeedback?.notificationOccurred('success');
+  } catch (e) {
+    tg.showAlert("❌ TON transaction failed / rejected");
+    tg.HapticFeedback?.notificationOccurred('error');
+  }
+}
+
+/* =========================================================
+   4) REFERRAL (50,000 MX JOIN BONUS + SHARE)
+   - New user gets local bonus once
+   - MLM real payouts must be done by BOT (server)
+   ========================================================= */
+
+function getStartParam() {
+  const params = new URLSearchParams(window.location.search);
+  const s = params.get('start');
+  return s ? String(s) : "";
+}
+
+function referralBoot() {
+  const start = getStartParam();
+  if (!start) return;
+
+  if (!localStorage.getItem(KEY.refOwner)) {
+    localStorage.setItem(KEY.refOwner, start);
+  }
+
+  const already = localStorage.getItem(KEY.refClaimed);
+  if (!already) {
+    state.balance = (state.balance || 0) + 50000;
+    localStorage.setItem(KEY.refClaimed, "true");
+
+    pushClaimHistory({
+      t: Date.now(),
+      amount: 50000,
+      type: "REF_JOIN",
+      ref: start
+    });
+
+    if (window.saveGameState) saveGameState();
+    if (window.updateVisualStats) updateVisualStats();
+
+    tg.showAlert("🎁 Referral Bonus: +50,000 MX added!");
+    tg.HapticFeedback?.notificationOccurred('success');
+  }
+
+  sendReferralEventToBot(start);
+}
+
+function sendReferralEventToBot(refOwner) {
+  const payload = {
+    action: "ref_join",
+    uid: UID,
+    refOwner: String(refOwner),
+    ts: Date.now()
   };
-})();
-</script>
-```0
+
+  try {
+    tg.sendData(JSON.stringify(payload));
+  } catch (e) {
+    /* if sendData not available in your context, ignore */
+  }
+}
+
+/* SHARE / INVITE (Telegram + OS share) */
+function buildRefLink() {
+  return `https://t.me/Matisov_X_bot?start=${UID}`;
+}
+
+async function shareReferral() {
+  const link = buildRefLink();
+  const text = `⚔️ MATISOV X — Cyber Samurai\nJoin the game & get 50,000 MX bonus!\nRef: ${UID}`;
+
+  const tgShare = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: "MATISOV X", text, url: link });
+      tg.HapticFeedback?.notificationOccurred('success');
+      return;
+    }
+  } catch(e){}
+
+  tg.openLink(tgShare);
+  tg.HapticFeedback?.impactOccurred('light');
+}
+
+function copyRefToClipboard() {
+  const link = buildRefLink();
+
+  const tempInput = document.createElement('input');
+  tempInput.value = link;
+  document.body.appendChild(tempInput);
+  tempInput.select();
+  document.execCommand('copy');
+  document.body.removeChild(tempInput);
+
+  tg.showAlert("✅ Referral link copied (50,000 MX for new players).");
+  tg.HapticFeedback?.notificationOccurred('success');
+}
+
+/* =========================================================
+   5) MULTI-LEVEL MARKETING (REAL THROUGH BOT)
+   - WebApp only sends events
+   - Bot calculates levels and credits users in DB
+   ========================================================= */
+
+function sendMLMInviteEvent(levelHint) {
+  const payload = {
+    action: "ref_invite",
+    uid: UID,
+    levelHint: levelHint || 1,
+    link: buildRefLink(),
+    ts: Date.now()
+  };
+
+  try { tg.sendData(JSON.stringify(payload)); } catch(e){}
+}
+
+/* =========================================================
+   6) SCREEN SWITCHER (FIX CLICK + RENDER)
+   ========================================================= */
+
+function switchSystemScreen(screenId) {
+  const allScreens = document.querySelectorAll('.game-screen');
+  allScreens.forEach(s => s.classList.remove('screen-visible'));
+
+  const allNavs = document.querySelectorAll('.nav-trigger');
+  allNavs.forEach(n => n.classList.remove('nav-active'));
+
+  if (screenId !== 'battle') {
+    const target = document.getElementById(`screen-${screenId}`);
+    if (target) target.classList.add('screen-visible');
+  }
+
+  const activeNav = document.getElementById(`btn-nav-${screenId}`);
+  if (activeNav) activeNav.classList.add('nav-active');
+
+  if (screenId === 'missions') renderNeuralMissions();
+
+  tg.HapticFeedback?.impactOccurred('light');
+}
+
+/* =========================================================
+   BIND UI BUTTONS (only if exist in HTML)
+   ========================================================= */
+
+function bindBlock3Buttons() {
+  const bClaim = document.getElementById('btn-claim-mx');
+  if (bClaim) bClaim.addEventListener('click', claimCoinsNow);
+
+  const bInvite = document.getElementById('btn-invite-ref');
+  if (bInvite) bInvite.addEventListener('click', shareReferral);
+
+  const bCopy = document.getElementById('btn-copy-ref');
+  if (bCopy) bCopy.addEventListener('click', copyRefToClipboard);
+
+  const bDeDust = document.getElementById('btn-open-dedust');
+  if (bDeDust) bDeDust.addEventListener('click', () => openDEX('dedust'));
+
+  const bSton = document.getElementById('btn-open-stonfi');
+  if (bSton) bSton.addEventListener('click', () => openDEX('stonfi'));
+
+  const bWallet = document.getElementById('btn-open-wallet');
+  if (bWallet) bWallet.addEventListener('click', openTonkeeper);
+
+  const bPay = document.getElementById('btn-pay-ton');
+  if (bPay) {
+    bPay.addEventListener('click', () => {
+      const to = "UQCT58CCHhHD9EuKlAVaZYlICdnbRdrhtWaVzl_CBqoZHEUP";
+      payTONReal(0.05, to, `MATISOV X | withdraw fee | uid=${UID}`);
+    });
+  }
+}
+
+/* =========================================================
+   LOOP UI UPDATE
+   ========================================================= */
+setInterval(() => {
+  renderClaimUI();
+}, 1000);
+
+/* =========================================================
+   INIT
+   ========================================================= */
+window.addEventListener('DOMContentLoaded', () => {
+  try {
+    referralBoot();
+    bindBlock3Buttons();
+    renderNeuralMissions();
+    renderClaimUI();
+    console.log("Block 3 loaded: Missions + Claim + Ref + DEX");
+  } catch (e) {
+    console.error("Block 3 error:", e);
+  }
+});
+                                                </script>
